@@ -1,4 +1,4 @@
-import { isObject, isNonEmptyString, isString, isNumber, isInteger, isBoolean, pick } from './lib/util';
+import { isObject, isNonEmptyString, isString, isNumber, isInteger, isBoolean, pick, GenericObject } from './lib/util';
 
 const RULE_PARAMS = ['required', 'type', 'label', 'test', 'min', 'max', 'default', 'sanitize', 'fromView', 'strict'];
 const RULE_LIBRARY = {
@@ -66,6 +66,9 @@ export class ValidateRule {
   required: boolean;
   optional: boolean;
   strict: boolean;
+  properties: GenericObject;
+  arrayType: any; // if an array, the entries must be of this type
+  apply: any;   // for arrays
 
   /**
    * @param {Object|string} rule - The rule or a reference to a predefined rule

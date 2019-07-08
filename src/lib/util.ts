@@ -90,6 +90,10 @@ export function isDate(val: any) {
   return val instanceof Date;
 }
 
+export function isArray(val: any) {
+  return Array.isArray(val);
+}
+
 export function asError(...args) {
   let err;
   let msg = [];
@@ -148,7 +152,7 @@ export function isEventAggregator(ea) {
   return isObject(ea) && isObject(ea.eventLookup) && Array.isArray(ea.messageHandlers);
 }
 
-export function pick(obj:object, ...args) {   // eslint-disable-line no-extend-native
+export function pick(obj: object, ...args) {   // eslint-disable-line no-extend-native
   let result = {};
   if (Array.isArray(args[0])) {
     args = args[0];
@@ -173,43 +177,33 @@ export function omit(obj, ...args) {
   return newObj;
 }
 
-/**
- * Parse string of the following syntax
- *    [cmd1][cmd2]My string
- *    [cmd1,cmd2]My string
- * and returns
- *    { cmds: [ 'cmd1', 'cmd2' ], value: 'My string' }
- * @param {String} s
- */
-export function getStringCommands(s) {
-  let cmd = [];
-  if (isString(s)) {
-    let m = s.match(REGEX.instr);
-    while (m && m.length) {
-      let p = m[1].split(',');
-      cmd = cmd.concat(p);
-      s = m[2];
-      m = m[2].match(REGEX.instr);
-    }
+export function validatePropertyType(obj, name, type) {
+  if (obj) {
+    return validateType(obj[name], type)
   }
-  return { cmds: cmd, value: s };
+  return false;
 }
 
-
-export function validateType(obj, name, type) {
-  if (obj[name]) {
-    if (type === '*') {
-      return true;
-    } else if (type === 'array' && Array.isArray(obj[name])) {
-      return true;
-    } else if (type === 'string' && isString(obj[name])) {
-      return true;
-    } else if (type === 'number' && isNumber(obj[name])) {
-      return true;
-    } else if (type === 'boolean' && isBoolean(obj[name])) {
-      return true;
-    } else if (type === 'object' && isObject(obj[name])) {
-      return true;
+/**
+* Verify that val is any one of the basic types or executes a RegExp against the val.
+* @param val
+* @param type {String} One of 'string', 'array', 'number', 'integer', 'boolean', 'object' or a RegExp/
+* @returns {boolean} Returns true if val is one of type. If type is a RegExp then tests val against the RegExp.
+*/
+export function validateType(val, type) {
+  if (isRegExp(type)) {
+    return type.test(val);
+  } else {
+    let types = Array.isArray(type) ? type : [];
+    if (isString(type)) {
+      types = type.split('|');
+    }
+    for (let tdx = 0; tdx < types.length; tdx++) {
+      let t = types[tdx];
+      let fn = VAL_MAP[t];
+      if (fn && fn(val, t)) {
+        return true;
+      }
     }
   }
   return false;
