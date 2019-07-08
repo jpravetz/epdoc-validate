@@ -1,7 +1,7 @@
 import { Validator } from './validator';
 import { ValidatorError } from './validator-error';
-import { isBoolean, isNumber, isObject, isRegExp, isString, isInteger, isFunction, isDate, GenericObject, hasValue, validateType } from './lib/util';
-import { ValidateRule } from './validate-rule';
+import { isBoolean, isNumber, isObject, isRegExp, isString, isInteger, isFunction, isDate, GenericObject, Callback, hasValue, deepCopy, validateType } from './lib/util';
+import { ValidatorRule } from './validator-rule';
 
 const REGEX = {
   string: /^(string)$/,
@@ -16,42 +16,41 @@ const APPLY_METHOD = {
   string: 'stringApply',
   boolean: 'booleanApply',
   int: 'numberApply',
-  integer: 'numberApply'
+  integer: 'numberApply',
+  number: 'numberApply',
+  date: 'dateApply',
+  any: 'anyApply',
+  null: 'nullApply',
+  object: 'objectApply',
+  array: 'arrayApply'
 };
 
 
 export class ValidatorItem {
-  protected _parent: GenericObject;
+  protected _parent: Validator;
   protected _role: string;
   protected _value: any;
-  protected _rule: ValidateRule;
+  protected _rule: ValidatorRule;
 
-  protected _errors: object[];
+  // track errors here for objects with properties, so we collect them all before failing
+  protected _errors: ValidatorError[];
   protected _name: string;
   protected _label: string;
 
-  constructor(parent: GenericObject, role: string, value: any) {
+  constructor(parent: Validator, role: string, value: any) {
     this._parent = parent;
     this._role = role;
     this._value = value;
     this._errors = [];
   }
 
-  setName(name) {
+  name(name) {
     this._name = name;
     return this;
   }
 
-  set name(val) {
-    this._name = val;
-  }
-
   set label(val) {
     this._label = val;
-  }
-
-  get name() {
-    return this._name;
   }
 
   get label() {
@@ -74,15 +73,19 @@ export class ValidatorItem {
     return hasValue(this._value);
   }
 
+  /**
+   * Set rule here or with validate method.
+   * @param rule {GenericObject} - Converted to ValidatorRule
+   */
   rule(rule: GenericObject) {
-    this._rule = new ValidateRule(rule);
+    this._rule = new ValidatorRule(rule);
     if (isFunction(rule.fromView)) {
       this._value = rule.fromView(this._value);
     }
     return this;
   }
 
-  validateProperty(obj: any, name: string, ruleDef: ValidateRule, opts: GenericObject = {}) {
+  validateProperty(obj: any, name: string, ruleDef: ValidatorRule, opts: GenericObject = {}) {
     if (!obj[name] && opts.required) {
       return new ValidatorError(name, 'missing');
     } else if (obj[name] && !validateType(obj[name], ruleDef.type)) {
@@ -91,19 +94,11 @@ export class ValidatorItem {
   }
 
   /**
-   * Validate a specific value
-   * @param value {Anything} Value to be validated
-   *
-   * @returns {Validator}
-   */
-  /**
-   * Validate this.value
-   * @param {ValidateRule} rule
+   * Validate this._value. Errors are added to this._parent.errors
+   * @param {GenericObject} rule
    */
   validate(rule?: GenericObject) {
-    if (rule) {
-      this._rule = new ValidateRule(rule)
-    }
+    this._rule = rule ? new ValidatorRule(rule) : this._rule;
     if (!this._name && this._rule.name) {
       this._name = this._rule.name;
     }
@@ -114,17 +109,34 @@ export class ValidatorItem {
       this._label = this._name;
     }
 
-    // First if empty and required or present and strict and not optional
-    if (!this.hasValue()) {
+    this._validate();
+
+    if (this._errors.length) {
+      this._parent.addErrors(this._errors);
+      this._errors = [];
+    } else if (this._parent.ref) {
+      if (this._parent.ref[this._rule.name] !== this._value) {
+        this._parent.changes[this._name] = this._value;
+      }
+    } else if (this._rule.appendToArray) {
+      this._parent.changes[this._name].push(this._value);
+    } else {
+      this._parent.changes[this._name] = this._value;
+    }
+  }
+
+  _validate() {
+    // First test if empty and required, or present and strict and not optional
+    if (!hasValue(this._value)) {
       if (this._rule.default) {
         this._value = this._rule.default;
         return this;
       } else if (this._rule.required) {
-        this.errors.push(new ValidatorError(this._label, 'missing'));
+        this._errors.push(new ValidatorError(this._label, 'missing'));
         return this;
       }
     } else if (this._rule.strict && !this._rule.optional && !this._rule.required) {
-      this.errors.push(new ValidatorError(this._label, 'notAllowed'));
+      this._errors.push(new ValidatorError(this._label, 'notAllowed'));
       return this;
     }
 
@@ -133,127 +145,25 @@ export class ValidatorItem {
     if (this._errors.length) {
       if (this._rule.default) {
         this._value = this._rule.default;
-      }
-    } else {
-      if (this._rule.apply && this._rule.apply.array) {
-        this._parent.changes[rule.name].push(test.value);
       } else {
-        if (!this._parent.doc || this._parent.doc[rule.name] !== test.value) {
-          this._parent.changes[rule.name] = test.value;
+        this._parent.addErrors(this._errors);
+      }
+      this._errors = [];
+    } else {
+      if (this._parent.reference) {
+        if (this._parent.reference[this._rule.name] !== this._value) {
+          this._parent.changes[this._name] = this._value;
         }
+      } else if (this._rule.appendToArray) {
+        this._parent.changes[this._name].push(this._value);
+      } else {
+        this._parent.changes[this._name] = this._value;
       }
     }
     //console.log(`validate ${value}`, this.changes);
     return this;
   }
 
-
-  /**
-   * Validate a value by sanitizing (to string, to integer, using function),
-   * limit testing (min, max) and test the value against a type or RegExp.
-   * Functions are called with parameters (val, ruleDef).
-   * @param val {string|number|
-   * @param ruleDef
-   * @param ruleDef.label {string}
-   * @param ruleDef.type {string|Regex} one of 'string', 'int', integer',
-   * 'float', 'number', 'boolean', 'array', 'date', 'object'. Must be set unless
-   * ruleDef.sanitize === 'integer'
-   * @param ruleDef.default {*} - If set, and val does not pass ruleDef, then
-   * set the return value to ruleDef.default.
-   * @param ruleDef.sanitize {String|function} If a string, must be one of the
-   * valid ruleDef types, and the value will be cast to that type
-   * @param ruleDef.min {number} min string length or integer value
-   * @param ruleDef.max {number} max string length or integer value
-   * @returns { value: value, error: {string} } Returns a translated error
-   *   string or sanitized value if no error
-   */
-  static applyRuleDef(val, ruleDef) {
-    let label = ruleDef.label ? ruleDef.label : ruleDef.name;
-    // Deal with booleans
-    if (REGEX.boolean.test(ruleDef.type)) {
-      if (isBoolean(val)) {
-        return { value: val };
-      }
-      if (ruleDef.strict) {
-        if (ruleDef.default) {
-          return { value: ruleDef.default };
-        }
-        return { error: new ValidatorError(name, 'numMax', { max: ruleDef.max }) };
-      }
-    } else if (isNumber(val) && val > 0) {
-      return { value: true };
-    } else if (isString(val) && REGEX.isTrue.text(val)) {
-      return { value: true };
-    }
-
-
-    let typeIs = {
-      string: REGEX.string.test(ruleDef.type),
-      number: REGEX.number.test(ruleDef.type),
-      object: REGEX.object.test(ruleDef.type),
-      boolean: REGEX.boolean.test(ruleDef.type)
-    };
-    // Sanitize the value if ruleDef.sanitize
-    if (isFunction(ruleDef.sanitize)) {
-      val = ruleDef.sanitize(val, ruleDef);
-    } else if (ruleDef.sanitize === 'string') {
-      val = isString(val) ? val : String(val);
-    } else if (isString(ruleDef.sanitize) && REGEX.integer.test(ruleDef.sanitize)) {
-      val = parseInt(val, 10);
-    } else if (typeIs.string && !isString(val) && val !== undefined && val !== null) {
-      val = String(val);
-    } else if (typeIs.boolean && !isBoolean(val)) {
-      if (isBoolean(val)) {
-        return { value: val };
-      }
-      if (isNumber(val) && val > 0) {
-        return { value: true };
-      } else if (isString(val) && REGEX.isTrue.text(val)) {
-        return { value: true };
-      } else if (ruleDef.default === true) {
-        return { value: true };
-      }
-      val = false;
-    }
-
-    if (typeIs.number || ruleDef.sanitize === 'integer') {
-      // Check min/max of numbers
-      if (val > ruleDef.max) {
-        if (isNumber(ruleDef.default)) {
-          return { value: ruleDef.default };
-        } else if (ruleDef.default === true) {
-          return { value: ruleDef.min };
-        } else if (isFunction(ruleDef.default)) {
-          return { value: ruleDef.default(val, ruleDef) };
-        }
-        return { error: new ValidatorError(ruleDef.label, 'numMax', { max: ruleDef.max }) };
-      }
-      if (val < ruleDef.min) {
-        if (isNumber(ruleDef.default)) {
-          return { value: ruleDef.default };
-        } else if (ruleDef.default === true) {
-          return { value: ruleDef.max };
-        } else if (isFunction(ruleDef.default)) {
-          return { value: ruleDef.default(val, ruleDef) };
-        }
-        return { error: new ValidatorError(ruleDef.label, 'numMin', { min: ruleDef.min }) };
-      }
-    } else if (!typeIs.object && !typeIs.boolean) {
-      // Check min/max of string length or num
-      if (isInteger(ruleDef.max) && val.length > ruleDef.max) {
-        return { error: new ValidatorError(ruleDef.label, 'lenMax', { max: ruleDef.max }) };
-      }
-      if (isInteger(ruleDef.min) && val.length < ruleDef.min) {
-        return { error: new ValidatorError(ruleDef.label, 'lenMin', { min: ruleDef.min }) };
-      }
-    }
-
-    if (!ValidatorItem.validateType(val, ruleDef.type)) {
-      return { error: new ValidatorError(ruleDef.label, 'invalid') };
-    }
-
-    return { value: val };
-  }
 
   apply() {
     let methodName = APPLY_METHOD[this._rule.type];
@@ -296,6 +206,23 @@ export class ValidatorItem {
     }
   }
 
+  nullApply(val) {
+    if (val === null) {
+      return val;
+    }
+    if (isFunction(this._rule.sanitize)) {
+      return this._rule.sanitize(val, this._rule);
+    }
+    if (this._rule.default === null) {
+      return this._rule.default;
+    }
+    if (isFunction(this._rule.default)) {
+      return this._rule.default(val, this._rule);
+    }
+    if (this._rule.required) {
+      throw new ValidatorError(this.label, 'null', { reason: 'missing or invalid' });
+    }
+  }
 
   /**
    * Apply this._rule to val returning a boolean or throwing an error.
@@ -312,10 +239,10 @@ export class ValidatorItem {
       if (isNumber(val) && val > 0) {
         return true;
       }
-      if (isString(val) && REGEX.isTrue.text(val)) {
+      if (isString(val) && REGEX.isTrue.test(val)) {
         return true;
       }
-      if (isString(val) && REGEX.isFalse.text(val)) {
+      if (isString(val) && REGEX.isFalse.test(val)) {
         return false;
       }
     }
@@ -326,7 +253,7 @@ export class ValidatorItem {
       return this._rule.default(val, this._rule);
     }
     if (this._rule.required) {
-      throw new ValidatorError(this.label, 'boolean', 'missing or invalid');
+      throw new ValidatorError(this.label, 'boolean', { reason: 'missing or invalid' });
     }
   }
 
@@ -359,13 +286,13 @@ export class ValidatorItem {
   }
 
   applyStringLengthTests(val) {
-    if (isRegExp(this._rule.test)) {
-      if (!this._rule.test.test(val)) {
+    if (isRegExp(this._rule.pattern)) {
+      if (!this._rule.pattern.test(val)) {
         throw new ValidatorError(this.label, 'string', { reason: 'invalid' });
       }
     }
-    if (isFunction(this._rule.test)) {
-      if (!this._rule.test(val, this._rule)) {
+    if (isFunction(this._rule.pattern)) {
+      if (!this._rule.pattern(val, this._rule)) {
         throw new ValidatorError(this.label, 'string', { reason: 'invalid' });
       }
     }
@@ -395,7 +322,7 @@ export class ValidatorItem {
    * @param {*} val
    */
   numberApply(val: any) {
-    let isInt = REGEX.integer.test(this._rule.type);
+    let isInt: boolean = REGEX.integer.test(this._rule.type);
     if (isNumber(val)) {
       if (isInt) {
         if (isFunction(this._rule.sanitize)) {
@@ -411,31 +338,31 @@ export class ValidatorItem {
           return this.applyNumberLimitTests(val);
         }
         if (Math.round(val) !== val) {
-          throw new ValidatorError(this.label, 'invalid');
+          throw new ValidatorError(this.label, 'number', { reason: 'invalid' });
         }
       }
       return this.applyNumberLimitTests(val);
     }
     if (isString(val)) {
       if (isInt) {
-        let valAsInt = parseInt(val, 10);
-        if (NaN(valAsInt)) {
+        let valAsInt: any = parseInt(val, 10);
+        if (isNaN(valAsInt)) {
           if (this._rule.default) {
             return this.getDefault();
           }
           if (this._rule.required) {
-            throw new ValidatorError(this.label, 'missing or invalid');
+            throw new ValidatorError(this.label, 'number', { reason: 'missing or invalid' });
           }
         }
         return valAsInt;
       }
-      let valAsFloat = parseFloat(val);
-      if (NaN(valAsFloat)) {
+      let valAsFloat: any = parseFloat(val);
+      if (isNaN(valAsFloat)) {
         if (this._rule.default) {
           return this.getDefault();
         }
         if (this._rule.required) {
-          throw new ValidatorError(this.label, 'missing or invalid');
+          throw new ValidatorError(this.label, 'number', { reason: 'missing or invalid' });
         }
       }
       return valAsFloat;
@@ -444,7 +371,7 @@ export class ValidatorItem {
       return this.getDefault();
     }
     if (this._rule.required) {
-      throw new ValidatorError(this.label, 'missing or invalid');
+      throw new ValidatorError(this.label, 'number', { reason: 'missing or invalid' });
     }
   }
 
@@ -492,7 +419,7 @@ export class ValidatorItem {
       return new Date(this._rule.default);
     }
     if (this._rule.required) {
-      throw new ValidatorError(this.label, 'missing or invalid');
+      throw new ValidatorError(this.label, 'date', { reason: 'missing or invalid' });
     }
     return val;
   }
@@ -527,7 +454,7 @@ export class ValidatorItem {
       if (isFunction(this._rule.sanitize)) {
         return this._rule.sanitize(val, this._rule);
       }
-      throw new ValidatorError(this._label, 'invalid');
+      throw new ValidatorError(this._label, 'object', { reason: 'invalid' });
     }
     if (isFunction(this._rule.default)) {
       return this._rule.default(val, this._rule);
@@ -536,7 +463,7 @@ export class ValidatorItem {
       return deepCopy(this._rule.default);
     }
     if (this._rule.required) {
-      throw new ValidatorError(this._label, 'missing');
+      throw new ValidatorError(this._label, 'object', { reason: 'missing' });
     }
     return val;
   }
@@ -564,30 +491,138 @@ export class ValidatorItem {
    * @param type {String} One of 'array'
    * @returns {boolean}
    */
-  static validateType(val, type) {
-    if (isRegExp(type)) {
-      return type.test(val);
-    } else {
-      let types = Array.isArray(type) ? type : [];
-      if (isString(type)) {
-        types = type.split('|');
+  // static validateType(val, type) {
+  //   if (isRegExp(type)) {
+  //     return type.test(val);
+  //   } else {
+  //     let types = Array.isArray(type) ? type : [];
+  //     if (isString(type)) {
+  //       types = type.split('|');
+  //     }
+  //     for (let tdx = 0; tdx < types.length; tdx++) {
+  //       let t = types[tdx];
+  //       if (ValidatorItem.validatePrimitiveType(val, t)) {
+  //         return true;
+  //       }
+  //     }
+  //   }
+  //   return false;
+  // }
+
+  /**
+   * Validate a value by sanitizing (to string, to integer, using function),
+   * limit testing (min, max) and test the value against a type or RegExp.
+   * Functions are called with parameters (val, ruleDef).
+   * @param val {string|number|
+   * @param ruleDef
+   * @param ruleDef.label {string}
+   * @param ruleDef.type {string|Regex} one of 'string', 'int', integer',
+   * 'float', 'number', 'boolean', 'array', 'date', 'object'. Must be set unless
+   * ruleDef.sanitize === 'integer'
+   * @param ruleDef.default {*} - If set, and val does not pass ruleDef, then
+   * set the return value to ruleDef.default.
+   * @param ruleDef.sanitize {String|function} If a string, must be one of the
+   * valid ruleDef types, and the value will be cast to that type
+   * @param ruleDef.min {number} min string length or integer value
+   * @param ruleDef.max {number} max string length or integer value
+   * @returns { value: value, error: {string} } Returns a translated error
+   *   string or sanitized value if no error
+   */
+  static applyRuleDef_deprecated(val, ruleDef) {
+    let label = ruleDef.label ? ruleDef.label : ruleDef.name;
+    // Deal with booleans
+    if (REGEX.boolean.test(ruleDef.type)) {
+      if (isBoolean(val)) {
+        return { value: val };
       }
-      for (let tdx = 0; tdx < types.length; tdx++) {
-        let t = types[tdx];
-        if (ValidatorItem.validatePrimitiveType(val, t)) {
-          return true;
+      if (ruleDef.strict) {
+        if (ruleDef.default) {
+          return { value: ruleDef.default };
         }
+        return { error: new ValidatorError(name, 'numMax', { max: ruleDef.max }) };
+      }
+    } else if (isNumber(val) && val > 0) {
+      return { value: true };
+    } else if (isString(val) && REGEX.isTrue.test(val)) {
+      return { value: true };
+    }
+
+
+    let typeIs = {
+      string: REGEX.string.test(ruleDef.type),
+      number: REGEX.number.test(ruleDef.type),
+      object: REGEX.object.test(ruleDef.type),
+      boolean: REGEX.boolean.test(ruleDef.type)
+    };
+    // Sanitize the value if ruleDef.sanitize
+    if (isFunction(ruleDef.sanitize)) {
+      val = ruleDef.sanitize(val, ruleDef);
+    } else if (ruleDef.sanitize === 'string') {
+      val = isString(val) ? val : String(val);
+    } else if (isString(ruleDef.sanitize) && REGEX.integer.test(ruleDef.sanitize)) {
+      val = parseInt(val, 10);
+    } else if (typeIs.string && !isString(val) && val !== undefined && val !== null) {
+      val = String(val);
+    } else if (typeIs.boolean && !isBoolean(val)) {
+      if (isBoolean(val)) {
+        return { value: val };
+      }
+      if (isNumber(val) && val > 0) {
+        return { value: true };
+      } else if (isString(val) && REGEX.isTrue.test(val)) {
+        return { value: true };
+      } else if (ruleDef.default === true) {
+        return { value: true };
+      }
+      val = false;
+    }
+
+    if (typeIs.number || ruleDef.sanitize === 'integer') {
+      // Check min/max of numbers
+      if (val > ruleDef.max) {
+        if (isNumber(ruleDef.default)) {
+          return { value: ruleDef.default };
+        } else if (ruleDef.default === true) {
+          return { value: ruleDef.min };
+        } else if (isFunction(ruleDef.default)) {
+          return { value: ruleDef.default(val, ruleDef) };
+        }
+        return { error: new ValidatorError(ruleDef.label, 'numMax', { max: ruleDef.max }) };
+      }
+      if (val < ruleDef.min) {
+        if (isNumber(ruleDef.default)) {
+          return { value: ruleDef.default };
+        } else if (ruleDef.default === true) {
+          return { value: ruleDef.max };
+        } else if (isFunction(ruleDef.default)) {
+          return { value: ruleDef.default(val, ruleDef) };
+        }
+        return { error: new ValidatorError(ruleDef.label, 'numMin', { min: ruleDef.min }) };
+      }
+    } else if (!typeIs.object && !typeIs.boolean) {
+      // Check min/max of string length or num
+      if (isInteger(ruleDef.max) && val.length > ruleDef.max) {
+        return { error: new ValidatorError(ruleDef.label, 'lenMax', { max: ruleDef.max }) };
+      }
+      if (isInteger(ruleDef.min) && val.length < ruleDef.min) {
+        return { error: new ValidatorError(ruleDef.label, 'lenMin', { min: ruleDef.min }) };
       }
     }
-    return false;
+
+    // if (!ValidatorItem.validateType(val, ruleDef.type)) {
+    //   return { error: new ValidatorError(ruleDef.label, 'invalid') };
+    // }
+
+    return { value: val };
   }
+
 
 }
 
 export class ValidatorInput extends ValidatorItem {
-  constructor(parent: object, value: any, fnFromData: any) {
+  constructor(parent: Validator, value: any, fnFromData?: Callback) {
     value = hasValue(value) ? value : '';
-    if( isString(value) && value.length > 0 ) {
+    if (isString(value) && value.length > 0) {
       value = value.trim();
     }
     super(parent, 'input', value);
@@ -599,13 +634,13 @@ export class ValidatorInput extends ValidatorItem {
 }
 
 export class ValidatorOption extends ValidatorItem {
-  constructor(parent, value) {
+  constructor(parent: Validator, value: any) {
     super(parent, 'option', value);
   }
 }
 
 export class ValidatorResponse extends ValidatorItem {
-  constructor(parent, value) {
+  constructor(parent: Validator, value: any) {
     super(parent, 'response', value);
   }
 }

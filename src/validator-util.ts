@@ -1,6 +1,6 @@
 // import { isFunction, isString, isNumber, isObject, isBoolean, isDate, isNonEmptyString, deepCopy } from 'lib/util';
 // import { ValidatorError } from 'lib/validator-error';
-// import { ValidateRule } from 'lib/validate/validate-rule';
+// import { ValidatorRule } from 'lib/validate/validate-rule';
 
 // const REGEX = {
 //   string: /^(string)$/,
@@ -41,7 +41,7 @@
 //   constructor (parent, val, ruleDef) {
 //     this.parent = parent;
 //     this.value = val;
-//     this.rule = new ValidateRule(ruleDef);
+//     this.rule = new ValidatorRule(ruleDef);
 //     this.errors = [];
 //   }
 

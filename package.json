@@ -2,34 +2,33 @@
   "name": "validate",
   "version": "1.0.0",
   "main": "dist/index.js",
+  "umd:main": "dist/index.umd.js",
+  "module": "dist/index.mjs",
   "source": "src/index.ts",
   "license": "MIT",
   "scripts": {
     "build": "microbundle",
     "dev": "microbundle watch",
-    "test": "jest --runInBand --verbose",
-    "coverage": "jest --coverage --runInBand --verbose",
-    "eslint": "eslint src/**/*.js --ignore-pattern \"node_modules/\""
+    "watch": "jest --watch",
+    "test": "jest --runInBand",
+    "coverage": "jest --coverage --runInBand --verbose"
+  },
+  "jest": {
+    "verbose": true
   },
   "engines": {
     "node": ">=8"
   },
-  "eslintConfig": {
-    "plugins": [
-      "node",
-      "jest"
-    ],
-    "env": {
-      "jest/globals": true,
-      "node": true,
-      "es6": true
-    },
-    "parserOptions": {
-      "sourceType": "module",
-      "ecmaVersion": 2018
-    }
-  },
   "devDependencies": {
-    "microbundle": "^0.11.0"
+    "@babel/core": "^7.5.0",
+    "@babel/preset-env": "^7.5.0",
+    "@babel/preset-typescript": "^7.3.3",
+    "@types/jest": "^24.0.15",
+    "babel-jest": "^24.8.0",
+    "babel-preset-env": "^1.7.0",
+    "jest": "^24.8.0",
+    "microbundle": "^0.11.0",
+    "ts-jest": "^24.0.2",
+    "ts-node": "^8.3.0"
   }
 }

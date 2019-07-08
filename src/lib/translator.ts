@@ -1,8 +1,12 @@
-import { GenericObject } from './lib/util';
+import { GenericObject } from './util';
 let i18n;
 
 export class Translator {
-  constructor (path: string, params?: GenericObject = {}) {
+  i18n:any;
+  private _path:string;
+  private _params:GenericObject;
+
+  constructor (path: string, params: GenericObject = {}) {
     this.i18n = i18n;
     this._path = path;
     this._params = params;
@@ -24,7 +28,7 @@ export class Translator {
     if (this.exists()) {
       return this.tr();
     } else {
-      return JSON.stringify(params);
+      return JSON.stringify(this._params);
     }
   }
 

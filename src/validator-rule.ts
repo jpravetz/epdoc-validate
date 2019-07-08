@@ -1,64 +1,48 @@
-import { isObject, isNonEmptyString, isString, isNumber, isInteger, isBoolean, pick, GenericObject } from './lib/util';
+import { isObject, isNonEmptyString, isString, isNumber, isInteger, isBoolean, pick, GenericObject, schemaTypeValidator, validSchemaTypes, Callback } from './lib/util';
 
-const RULE_PARAMS = ['required', 'type', 'label', 'test', 'min', 'max', 'default', 'sanitize', 'fromView', 'strict'];
+const RULE_PARAMS = ['required', 'type', 'label', 'format', 'min', 'max', 'default', 'sanitize', 'fromView', 'strict','pattern'];
+const FORMAT_LIBRARY = {
+  email: /^(?:[a-zA-Z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-zA-Z0-9!#$%&'*+/=?^_`{|}~-]+)*|"(?:[\x01-\x08\x0b\x0c\x0e-\x1f\x21\x23-\x5b\x5d-\x7f]|\\[\x01-\x09\x0b\x0c\x0e-\x7f])*")@(?:(?:[a-zA-Z0-9](?:[a-zA-Z0-9-]*[a-zA-Z0-9])?\.)+[a-zA-Z0-9](?:[a-zA-Z0-9-]*[a-zA-Z0-9])?|\[(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?|[a-zA-Z0-9-]*[a-zA-Z0-9]:(?:[\x01-\x08\x0b\x0c\x0e-\x1f\x21-\x5a\x53-\x7f]|\\[\x01-\x09\x0b\x0c\x0e-\x7f])+)\])$/,
+  dimension: /^\d[1,4]$/,
+  filename: /^[^\/]+$/,
+  password: /^.{6,}$/,
+  globalPerm: /^(none|globalView|globalAdmin)$/
+};
 const RULE_LIBRARY = {
-  url: { test: /^https?:\/\// },
+  url: { pattern: /^https?:\/\// },
   email: {
-    test: /^(?:[a-zA-Z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-zA-Z0-9!#$%&'*+/=?^_`{|}~-]+)*|"(?:[\x01-\x08\x0b\x0c\x0e-\x1f\x21\x23-\x5b\x5d-\x7f]|\\[\x01-\x09\x0b\x0c\x0e-\x7f])*")@(?:(?:[a-zA-Z0-9](?:[a-zA-Z0-9-]*[a-zA-Z0-9])?\.)+[a-zA-Z0-9](?:[a-zA-Z0-9-]*[a-zA-Z0-9])?|\[(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?|[a-zA-Z0-9-]*[a-zA-Z0-9]:(?:[\x01-\x08\x0b\x0c\x0e-\x1f\x21-\x5a\x53-\x7f]|\\[\x01-\x09\x0b\x0c\x0e-\x7f])+)\])$/,
+    pattern: FORMAT_LIBRARY.email,
     sanitize: function (v) {
       return String(v); // v.toLowerCase();
     }
   },
-  dimension: { type: 'string', test: /^\d[1,4]$/ },
-  aspect: { type: 'string', test: /^\d+:\d+$/ },
-  title: { type: 'string', test: /^.+$/ },
-  filename: { type: 'string', test: /^[^\/]+$/ },
-  fullname: { type: 'string', test: /^.+$/ },
-  company: { type: 'string', test: /^.+$/ },
-  subject: { type: 'string', test: /^.+$/ },
-  description: { type: 'string', test: /^.+$/ },
-  password: { type: 'string', test: /^.{6,}$/ },
-  label: { type: 'string', test: /^[a-zA-Z\-\.\s]+$/ },
-  username: { type: 'string', test: /^[a-z0-9]+$/ },
-  interaction: { type: 'string', test: /^(none|url|clickplay)$/ },
-  globalPerm: { type: 'string', test: /^(none|globalView|globalAdmin)$/ },
-  streamStatus: { type: 'string', test: /^(upcoming|live|completed)$/ },
-  usertoken: { type: 'string', test: /^.*$/ },
-  externalId: { type: 'string', test: /^.*$/ },
-  posInt: { type: 'string', test: /^\d+$/, sanitize: 'integer' },
-  posIntAsString: { type: 'string', test: /^\d+$/, sanitize: 'string' },
-  signedInt: { type: 'string', test: /^(\+|-)?\d+$/, sanitize: 'integer' }
-};
-const PRIM_MAP = {
-  '*': function (val) {
-    return true;
-  },
-  array: function (val) {
-    return Array.isArray(val);
-  },
-  string: function (val) {
-    return isString(val);
-  },
-  number: function (val) {
-    return isNumber(val);
-  },
-  integer: function (val) {
-    return isInteger(val);
-  },
-  boolean: function (val) {
-    return isBoolean(val);
-  },
-  object: function (val) {
-    return isObject(val);
-  }
+  dimension: { type: 'string', pattern: FORMAT_LIBRARY.dimension },
+  aspect: { type: 'string', pattern: /^\d+:\d+$/ },
+  title: { type: 'string', pattern: /^.+$/ },
+  filename: { type: 'string', pattern: FORMAT_LIBRARY.filename },
+  fullname: { type: 'string', pattern: /^.+$/ },
+  company: { type: 'string', pattern: /^.+$/ },
+  subject: { type: 'string', pattern: /^.+$/ },
+  description: { type: 'string', pattern: /^.+$/ },
+  password: { type: 'string', pattern: FORMAT_LIBRARY.password },
+  label: { type: 'string', pattern: /^[a-zA-Z\-\.\s]+$/ },
+  username: { type: 'string', pattern: /^[a-z0-9]+$/ },
+  interaction: { type: 'string', pattern: /^(none|url|clickplay)$/ },
+  globalPerm: { type: 'string', pattern: FORMAT_LIBRARY.globalPerm },
+  streamStatus: { type: 'string', pattern: /^(upcoming|live|completed)$/ },
+  usertoken: { type: 'string', pattern: /^.*$/ },
+  externalId: { type: 'string', pattern: /^.*$/ },
+  posInt: { type: 'string', pattern: /^\d+$/, sanitize: 'integer' },
+  posIntAsString: { type: 'string', pattern: /^\d+$/, sanitize: 'string' },
+  signedInt: { type: 'string', pattern: /^(\+|-)?\d+$/, sanitize: 'integer' }
 };
 
-export class ValidateRule {
+export class ValidatorRule {
 
   name: string;
   label: string;
-  type: any;
-  test: any;
+  type: any;      // string or array of strings or strings separated by '|'
+  pattern: any;
   default: any;
   min: number;
   max: number;
@@ -68,7 +52,8 @@ export class ValidateRule {
   strict: boolean;
   properties: GenericObject;
   arrayType: any; // if an array, the entries must be of this type
-  apply: any;   // for arrays
+  appendToArray: boolean;   // for arrays
+  fromView: Callback; // hook to allow value to be manipulated, eg converting 0/1 to false/true XXX use sanitize instead
 
   /**
    * @param {Object|string} rule - The rule or a reference to a predefined rule
@@ -110,6 +95,9 @@ export class ValidateRule {
       this._fromLibrary(rule);
     }
     this.label = this.label ? this.label : this.name;
+    if( !this.isValid() ) {
+      throw new Error('Invalid validator rule');
+    }
   }
 
   isValid() {
@@ -118,12 +106,13 @@ export class ValidateRule {
 
   _fromLibrary(sRule) {
     if (RULE_LIBRARY[sRule]) {
+      // It's a pre-canned rule
       Object.assign(this, RULE_LIBRARY[sRule]);
     } else {
       let types = sRule.split('|');
       for (let tdx = 0; tdx < types.length; tdx++) {
-        if (!PRIM_MAP[types[tdx]]) {
-          throw new Error(`Invalid type ${sRule} must be one of ${ValidateRule.validTypes().join(', ')}`);
+        if( schemaTypeValidator(types[tdx]) === undefined ) {
+          throw new Error(`Invalid type ${sRule} must be one of ${validSchemaTypes.join(', ')}`);
         }
       }
       // TODO 
@@ -134,7 +123,7 @@ export class ValidateRule {
 
   /**
    * Expand 'properties', 'required' and 'optional' generic objects into the
-   * 'properties' generic object as a hash of key = ValidateRule object.
+   * 'properties' generic object as a hash of key = ValidatorRule object.
    * @param {Object} rule - Generic object potentially with 'properties',
    * 'required' and 'optional' dictionaries
    */
@@ -142,14 +131,14 @@ export class ValidateRule {
     let props = [];
     if (isObject(rule.properties)) {
       Object.keys(rule.properties).forEach(key => {
-        let subRule = new ValidateRule(rule.properties[key]);
+        let subRule = new ValidatorRule(rule.properties[key]);
         props.push(subRule);
       });
     }
     ['required', 'optional'].forEach(prop => {
       if (isObject(rule[prop])) {
         Object.keys(rule[prop]).forEach(key => {
-          let subRule = new ValidateRule(rule[prop][key]);
+          let subRule = new ValidatorRule(rule[prop][key]);
           subRule[prop] = true;
           props.push(subRule);
         });
@@ -158,7 +147,4 @@ export class ValidateRule {
     return this;
   }
 
-  static validTypes() {
-    return [...Object.keys(PRIM_MAP), ...Object.keys(RULE_LIBRARY)];
-  }
 }

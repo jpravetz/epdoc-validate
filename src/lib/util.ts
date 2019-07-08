@@ -10,6 +10,7 @@ const REGEX = {
 };
 
 export type GenericObject = { [key: string]: any };
+export type Callback = (val: any) => any;
 
 if (!('toJSON' in Error.prototype)) {
   Object.defineProperty(Error.prototype, 'toJSON', {
@@ -52,8 +53,8 @@ export function notString(val: any) {
 }
 
 export function isNonEmptyString(val: any, path?: string) {
-  let s = path ? getPropertyValue(val, path) : val;
-  return isString(s) && s.length;
+  val = path ? getPropertyValue(val, path) : val;
+  return typeof val === 'string' && val.length > 0;
 }
 
 export function isString(val: any, path?: string) {
@@ -71,6 +72,14 @@ export function isFunction(val: any) {
 
 export function isRegExp(val: any) {
   return val instanceof RegExp;
+}
+
+export function isNull(val: any) {
+  return val === null ? true : false;
+}
+
+export function isDefined(val: any) {
+  return val !== undefined;
 }
 
 export function isNonEmptyArray(val: any, path?: string) {
@@ -124,9 +133,9 @@ export function asError(...args) {
  * @param obj
  * @returns {boolean}
  */
-export function isObject(obj: *, path?: string) {
+export function isObject(obj: any, path?: string) {
   let val = path ? getPropertyValue(obj, path) : obj;
-  return val !== null && typeof val === 'object' && !Array.isArray(val) && !(val instanceof Date);
+  return val !== null && typeof val === 'object' && !Array.isArray(val) && !(val instanceof Date) && !(val instanceof RegExp);
 }
 
 /**
@@ -184,26 +193,39 @@ export function validatePropertyType(obj, name, type) {
   return false;
 }
 
+const VAL_MAP = {
+  string: isString,
+  number: isNumber,
+  boolean: isBoolean,
+  null: isNull,
+  object: isObject,
+  array: isArray,
+  date: isDate,
+  any: isDefined,
+  integer: isInteger
+}
+export function schemaTypeValidator(type: string) {
+  return VAL_MAP[type];
+}
+
+export let validSchemaTypes: string[] = Object.keys(VAL_MAP);
+
 /**
 * Verify that val is any one of the basic types or executes a RegExp against the val.
 * @param val
-* @param type {String} One of 'string', 'array', 'number', 'integer', 'boolean', 'object' or a RegExp/
+* @param type {String|array of string} - To contain one or more entries from VAL_MAP as a string, array of strings or entries separated by '|'.
 * @returns {boolean} Returns true if val is one of type. If type is a RegExp then tests val against the RegExp.
 */
-export function validateType(val, type) {
-  if (isRegExp(type)) {
-    return type.test(val);
-  } else {
-    let types = Array.isArray(type) ? type : [];
-    if (isString(type)) {
-      types = type.split('|');
-    }
-    for (let tdx = 0; tdx < types.length; tdx++) {
-      let t = types[tdx];
-      let fn = VAL_MAP[t];
-      if (fn && fn(val, t)) {
-        return true;
-      }
+export function validateType(val:any, type:any) {
+  let types = Array.isArray(type) ? type : [];
+  if (isString(type)) {
+    types = type.split('|');
+  }
+  for (let tdx = 0; tdx < types.length; tdx++) {
+    let t = types[tdx];
+    let fn = VAL_MAP[t];
+    if (fn && fn(val)) {
+      return true;
     }
   }
   return false;
@@ -212,44 +234,11 @@ export function validateType(val, type) {
 export function validateProperty(obj, name, type, required) {
   if (!obj[name] && required) {
     return { type: 'missing', key: name };
-  } else if (obj[name] && !validateType(obj, name, type)) {
+  } else if (obj[name] && !validateType(obj[name], type)) {
     return { type: 'type', key: name };
   }
 }
 
-export function validateObject(obj, rules) {
-  let result = {};
-  let errors = [];
-  if (rules.required) {
-    Object.keys(rules.required).forEach(key => {
-      let err = validateProperty(obj, key, rules.required[key], true);
-      if (err) {
-        errors.push(err);
-      } else {
-        result[key] = obj[key];
-      }
-    });
-  }
-  if (rules.optional) {
-    Object.keys(rules.optional).forEach(key => {
-      let err = validateProperty(obj, key, rules.optional[key], false);
-      if (err) {
-        errors.push(err);
-      } else {
-        result[key] = obj[key];
-      }
-    });
-  }
-  if (rules.strict) {
-    Object.keys(obj).forEach(key => {
-      let allowed = (rules.required && rules.required[key] || rules.optional && rules.optional[key]);
-      if (!allowed) {
-        errors.push({ type: 'invalid', key: key });
-      }
-    });
-  }
-  return { data: result, errors: errors };
-}
 
 export function validateErrorToString(errors, i18n, trRoot) {
   if (errors && errors.length) {
@@ -268,20 +257,6 @@ export function tr(s, i18n) {
     }
     return s;
   }
-}
-
-export function wait(ms) {
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      resolve();
-    }, ms);
-  });
-}
-
-export function getQueryStringParam(name) {
-  let results = new RegExp('[\?&]' + name + '=([^&#]*)')
-    .exec(window.location.href);
-  return results ? results[1] : undefined;
 }
 
 export function isTrue(val) {
@@ -310,51 +285,20 @@ export function asFloat(val) {
   if (typeof val === 'number') {
     return val;
   } else if (isNonEmptyString(val)) {
-    return parseFloat(val, 10);
+    return parseFloat(val);
   }
   return 0;
 }
 
 export function asInteger(val) {
   if (typeof val === 'number') {
-    return val;
+    return Number.isInteger(val) ? val : Math.round(val);
   } else if (isNonEmptyString(val)) {
     return parseInt(val, 10);
   }
   return 0;
 }
 
-export function calcCtor(open, click, opts = {}) {
-  if (typeof open === 'number' && open >= 1) {
-    if (typeof click === 'number' && click >= 1) {
-      return click / open;
-    }
-    return 0;
-  }
-  return opts.ifInvalid !== undefined ? opts.ifInvalid : '';
-}
-
-export function calcPct(val, total) {
-  if (typeof total === 'number' && total > 0) {
-    if (typeof val === 'number' && val > 0) {
-      return val / total;
-    }
-    return 0;
-  }
-}
-
-export function camelToDash(str) {
-  return str
-    .replace(REGEX.firstUppercase, ([first]) => first.toLowerCase())
-    .replace(REGEX.allUppercase, ([letter]) => `-${letter.toLowerCase()}`);
-}
-
-export function classToUrn(str) {
-  return str
-    .replace(REGEX.customElement, '')
-    .replace(REGEX.firstUppercase, ([first]) => first.toLowerCase())
-    .replace(REGEX.allUppercase, ([letter]) => `.${letter.toLowerCase()}`);
-}
 
 /**
  *
@@ -380,154 +324,6 @@ export function roundNumber(num, dec = 3) {
   return Math.round(num * factor) / factor;
 }
 
-const MS_DEFAULTS = {
-  precision: 3,
-  h: 'h',
-  m: 'm',
-  s: 's',
-  decimal: '.',
-  show: {}
-};
-
-export function fpsRound(t, fps) {
-  return Math.round(t * fps) / fps;
-}
-
-/**
- * Formats a duration into a string of the form 3:03:22.333 or 3.123, with as few leading numbers
- * as is necessary to display the time.
- * NOTE: needs to be verified at precision values other than 3
- * @param ms {number} Time duration in milliseconds
- * @param options {Object}
- * @param [options.h='h'] {string}
- * @param [options.m='m'] {string}
- * @param [options.s='s'] {string}
- * @param [options.decimal='.'] {string}
- * @param [opts.show.h] {Number|boolean} If number, then always show this many digits of hours
- * @param [opts.show.m] {Number|boolean} If number, then always show this many digits of minutes
- * @param [opts.precision=3] {Number} Number of decimal seconds to display
- * @returns {string}
- */
-export function formatMS(milliseconds, options = {}) {
-  let opts = Object.assign({}, MS_DEFAULTS, options);
-  let neg = '';
-  let ms = Math.round(milliseconds * 1000) / 1000;
-  if (ms < 0) {
-    ms = 0 - ms;
-    neg = '-';
-  }
-  let m = opts.format ? opts.format.match(/^([s]+)\.([m]+)s$/) : false;
-  if (m && m.length) {
-    opts.precision = m[2].length;
-    opts.show.h = false;
-    opts.show.m = false;
-    opts.show.s = m[1].length;
-    opts.s = 's';
-  }
-
-  let seconds = Math.floor(ms / 1000);
-  let minutes;
-  let hours;
-  if (opts.show.m) {
-    seconds = seconds % 60;
-    minutes = Math.floor(ms / (60 * 1000));
-    if (opts.show.h) {
-      minutes = minutes % 60;
-      hours = Math.floor(ms / (60 * 60 * 1000));
-    }
-  }
-  let res = '';
-  if (opts.precision) {
-    res = msToPrecision(ms, opts);
-  }
-  if (hours) {
-    return neg + hours + opts.h + pad(minutes, 2) + opts.m + pad(seconds, 2) + res + opts.s;
-  } else if (minutes || opts.show.h) {
-    if (isNumber(opts.show.h) && opts.show.h) {
-      return neg + pad(hours, opts.show.h) + opts.h + pad(minutes, 2) + opts.m + pad(seconds, 2) + res + opts.s;
-    }
-    return neg + minutes + opts.m + pad(seconds, 2) + res + opts.s;
-  } else if (isNumber(opts.show.m) && opts.show.m) {
-    return neg + pad(minutes, opts.show.m) + opts.m + pad(seconds, 2) + res + opts.s;
-  }
-  return neg + seconds + res + opts.s;
-}
-
-function msToPrecision(ms, opts) {
-  let milli = 1000 * roundNumber((ms % 1000) / 1000, opts.precision);
-  return opts.decimal + pad(milli, opts.precision);
-}
-
-export function styleFromDict(dict) {
-  let result = '';
-  Object.keys(dict).forEach(key => {
-    result += `${key}: ${dict[key]}; `;
-  });
-  return result;
-}
-
-export function addMonthsUTCBroken(date, count) {
-  if (date && count) {
-    let d0 = new Date(+date).getUTCDate();
-    let d1 = new Date(+date).getUTCDate();
-    d0.setUTCMonth(d0.getUTCMonth() + count, 1);
-    let m = d0.getUTCMonth();
-    d0.setUTCDate(d1);
-    if (d0.getUTCMonth() !== m) {
-      d0.setUTCDate(0);
-    }
-    return d0;
-  }
-}
-
-export function addMonthsUTC(date, count = 1) {
-  if (date && count) {
-    let d = new Date(date);
-    let result = d.setMonth(d.getMonth() + count);
-    return result;
-  }
-  return date;
-}
-
-const MONTH = {
-  'Jan': 0,
-  'Feb': 1,
-  'Mar': 2,
-  'Apr': 3,
-  'May': 4,
-  'Jun': 5,
-  'Jul': 6,
-  'Aug': 7,
-  'Sep': 8,
-  'Oct': 9,
-  'Nov': 10,
-  'Dec': 11
-};
-
-const dateRange = /^(\d\d)([a-zA-Z]{3})(\d\d\d\d)\-(\d\d)([a-zA-Z]{3})(\d\d\d\d)$/;
-
-export function parseDateRange(s) {
-  if (typeof s === 'string') {
-    let p = s.match(dateRange);
-    if (p && p.length && MONTH[p[2]] !== undefined && MONTH[p[5]] !== undefined) {
-      let dEnd = new Date(Date.UTC(p[6], MONTH[p[5]], p[4]));
-      return [new Date(Date.UTC(p[3], MONTH[p[2]], p[1])), new Date(dEnd.getTime())];
-    }
-  }
-}
-
-export function compare(a, b) {
-  if (a < b) {
-    return -1;
-  } else if (a > b) {
-    return 1;
-  }
-  return 0;
-}
-
-export function compareDwell(a, b) {
-  return compare(parseInt(a, 10), parseInt(b, 10));
-}
 
 /**
  * Retrieves the value in the object specified by the key path
@@ -537,9 +333,9 @@ export function compareDwell(a, b) {
  * @param [opts.src] {String}
  * @returns {*} the value
  */
-export function getPropertyValue(object, ...rest) {
+export function getPropertyValue(object:object, ...rest) {
   let a = [];
-  let opts = {};
+  let opts:any = {};
   rest.forEach(arg => {
     if (isString(arg)) {
       arg = arg.replace(/\[(\w+)\]/g, '.$1'); // convert indexes to properties
@@ -655,33 +451,6 @@ export function deepEquals(a, b) {
     });
   }
   return false;
-}
-
-/**
- * Compares two arrays of strings and returns a list of those strings that are
- * in arr1 but missing from arr2 (missing) and those strings that are in arr2
- * but missing from arr1 (extra).
- * @param {Array} arr1 - Array of strings
- * @param {Array} arr2 - Array of strings
- * @return { missing: [], extra: [] } - List of strings in arr1 that are missing
- * and extra to arr2.
- */
-export function compareArray(arr1, arr2) {
-  if (Array.isArray(arr1) && Array.isArray(arr2)) {
-    return {
-      missing: arr1.filter(val1 => {
-        return arr2.includes(val1) ? false : true;
-      }),
-      extra: arr2.filter(val2 => {
-        return arr1.includes(val2) ? false : true;
-      })
-    };
-  } else if (Array.isArray(arr1)) {
-    return { missing: [...arr1], extra: [] };
-  } else if (Array.isArray(arr2)) {
-    return { missing: [], extra: [...arr2] };
-  }
-  return { missing: [], extra: [] };
 }
 
 export function isSet(a) {
