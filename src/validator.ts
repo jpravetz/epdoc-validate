@@ -17,7 +17,7 @@ export class Validator {
 
   constructor(changes: object, errors: ValidatorError[] = []) {
     this._changes = changes;
-    this._errors = errors ;
+    this._errors = errors;
   }
 
   /**
@@ -52,10 +52,11 @@ export class Validator {
     return new ValidatorInput(this, val, fnFromData);
   }
 
-  response(obj = {}) {
+  response(obj = {}): ValidatorResponse {
     this._obj = obj;
     this._role = 'response';
-    return this;
+    return new ValidatorResponse(this, this._obj)
+    // return this;
   }
 
   options(obj = {}) {
@@ -131,13 +132,13 @@ export class Validator {
     });
   }
 
-    /**
-   * Similar to Object.assign except recursively validates and assigns values
-   * from srcObj.
-   * @param {*} destObj - This object is populated with entries from srcObj
-   * @param {Object} srcObj - Value to be validated
-   * @param {*} rules - Object containing recursive rules
-   */
+  /**
+ * Similar to Object.assign except recursively validates and assigns values
+ * from srcObj.
+ * @param {*} destObj - This object is populated with entries from srcObj
+ * @param {Object} srcObj - Value to be validated
+ * @param {*} rules - Object containing recursive rules
+ */
   // validateObjectAssign_deprecated(destObj, srcObj, rules) {
   //   if (rules.type === 'object' && isObject(srcObj) && rules.properties) {
   //     let dest = {};

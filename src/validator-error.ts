@@ -5,6 +5,12 @@ export class ValidatorError {
   public key: string;
   public type: string;
 
+  /**
+   * 
+   * @param key - name of attribute that caused the error
+   * @param type - error type (eg. invalid, min, missing, max)
+   * @param params - params to pass to translation string
+   */
   constructor(key: string, type: string, params: GenericObject = {}) {
     this.key = key;
     this.type = type;

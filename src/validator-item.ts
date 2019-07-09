@@ -335,7 +335,7 @@ export class ValidatorItem {
           return this.applyNumberLimitTests(val);
         }
         if (Math.round(val) !== val) {
-          throw new ValidatorError(this.label, 'number', { reason: 'invalid' });
+          throw new ValidatorError(this.label, 'invalid');
         }
       }
       return this.applyNumberLimitTests(val);
@@ -348,7 +348,7 @@ export class ValidatorItem {
             return this.getDefault();
           }
           if (this._rule.required) {
-            throw new ValidatorError(this.label, 'number', { reason: 'missing or invalid' });
+            throw new ValidatorError(this.label, 'missing or invalid');
           }
         }
         return valAsInt;
@@ -359,7 +359,7 @@ export class ValidatorItem {
           return this.getDefault();
         }
         if (this._rule.required) {
-          throw new ValidatorError(this.label, 'number', { reason: 'missing or invalid' });
+          throw new ValidatorError(this.label, 'missing or invalid');
         }
       }
       return valAsFloat;
@@ -368,7 +368,7 @@ export class ValidatorItem {
       return this.getDefault();
     }
     if (this._rule.required) {
-      throw new ValidatorError(this.label, 'number', { reason: 'missing or invalid' });
+      throw new ValidatorError(this.label, 'missing or invalid');
     }
   }
 
@@ -416,7 +416,7 @@ export class ValidatorItem {
       return new Date(this._rule.default);
     }
     if (this._rule.required) {
-      throw new ValidatorError(this.label, 'date', { reason: 'missing or invalid' });
+      throw new ValidatorError(this.label, 'missing or invalid');
     }
     return val;
   }
@@ -451,7 +451,7 @@ export class ValidatorItem {
       if (isFunction(this._rule.sanitize)) {
         return this._rule.sanitize(val, this._rule);
       }
-      throw new ValidatorError(this._label, 'object', { reason: 'invalid' });
+      throw new ValidatorError(this._label, 'invalid');
     }
     if (isFunction(this._rule.default)) {
       return this._rule.default(val, this._rule);
@@ -460,7 +460,7 @@ export class ValidatorItem {
       return deepCopy(this._rule.default);
     }
     if (this._rule.required) {
-      throw new ValidatorError(this._label, 'object', { reason: 'missing' });
+      throw new ValidatorError(this._label, 'missing');
     }
     return val;
   }
