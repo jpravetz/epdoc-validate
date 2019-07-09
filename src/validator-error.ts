@@ -2,21 +2,13 @@ import { Translator } from './lib/translator';
 import { GenericObject } from './lib/util';
 
 export class ValidatorError {
-  private _key: string;
-  private _type: string;
+  public key: string;
+  public type: string;
 
   constructor(key: string, type: string, params: GenericObject = {}) {
-    this._key = key;
-    this._type = type;
+    this.key = key;
+    this.type = type;
     Object.assign(this, params);
-  }
-
-  get key() {
-    return this._key;
-  }
-
-  get type() {
-    return this._type;
   }
 
   get message() {
@@ -24,7 +16,7 @@ export class ValidatorError {
   }
 
   toString() {
-    let tr = 'validator.error.' + this._type;
+    let tr = 'validator.error.' + this.type;
     return new Translator(tr).params(this).trIfExists();
   }
 }

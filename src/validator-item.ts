@@ -145,10 +145,7 @@ export class ValidatorItem {
     if (this._errors.length) {
       if (this._rule.default) {
         this._value = this._rule.default;
-      } else {
-        this._parent.addErrors(this._errors);
       }
-      this._errors = [];
     } else {
       if (this._parent.reference) {
         if (this._parent.reference[this._rule.name] !== this._value) {
@@ -186,7 +183,7 @@ export class ValidatorItem {
             this._errors.concat(item.errors);
           }
         } catch (err) {
-          this.errors.push(err);
+          this._errors.push(err);
         }
       });
     }
@@ -200,7 +197,7 @@ export class ValidatorItem {
             this._errors.concat(item.errors);
           }
         } catch (err) {
-          this.errors.push(err);
+          this._errors.push(err);
         }
       }
     }
@@ -383,7 +380,7 @@ export class ValidatorItem {
       if (isFunction(this._rule.default)) {
         return this._rule.default(val, this._rule, 'min');
       }
-      throw new ValidatorError(this._label, 'numMin', { min: this._rule.min });
+      throw new ValidatorError(this._label, 'min', { min: this._rule.min });
     }
     if (isNumber(this._rule.max) && val > this._rule.max) {
       if (isNumber(this._rule.default)) {
@@ -392,7 +389,7 @@ export class ValidatorItem {
       if (isFunction(this._rule.default)) {
         return this._rule.default(val, this._rule, 'max');
       }
-      throw new ValidatorError(this._label, 'lenMax', { max: this._rule.max });
+      throw new ValidatorError(this._label, 'max', { max: this._rule.max });
     }
     return val;
   }

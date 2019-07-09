@@ -4,18 +4,14 @@
     {
       "type": "node",
       "request": "launch",
-      "name": "Launch Program",
-      "program": "${workspaceRoot}/src/index.js",
-      "sourceMaps": true,
-      "runtimeExecutable": "${workspaceRoot}/node_modules/.bin/babel-node"
-    },
-    {
-      "type": "node",
-      "request": "attach",
-      "name": "Attach for debug",
-      "restart": false,
-      "protocol": "inspector",
-      "sourceMaps": true
+      "name": "Jest Tests",
+      "trace": "true",
+      "program": "${workspaceFolder}/node_modules/jest/bin/jest.js",
+      "outFiles": ["${workspaceFolder}/dist/**/*.js"],
+      "runtimeArgs": [
+        "--inspect-brk"
+      ],
+      "port": 9229
     }
   ]
 }
