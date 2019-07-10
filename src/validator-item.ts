@@ -69,6 +69,9 @@ export class ValidatorItem {
     return this._value;
   }
 
+  /**
+   * Can be overridden by subclasses
+   */
   hasValue() {
     return hasValue(this._value);
   }
@@ -127,7 +130,7 @@ export class ValidatorItem {
 
   _validate() {
     // First test if empty and required, or present and strict and not optional
-    if (!hasValue(this._value)) {
+    if (!this.hasValue(this._value)) {
       if (this._rule.default) {
         this._value = this._rule.default;
         return this;
@@ -169,7 +172,7 @@ export class ValidatorItem {
       throw new Error(`Invalid type '${this._rule.type}'`);
     }
     try {
-      val = this[methodName](this._value);
+      this._value = this[methodName](this._value);
     } catch (err) {
       this._errors.push(err);
     }
@@ -342,7 +345,7 @@ export class ValidatorItem {
     }
     if (isString(val)) {
       if (isInt) {
-        let valAsInt: any = parseInt(val, 10);
+        let valAsInt: any = Math.round(parseFloat(val));
         if (isNaN(valAsInt)) {
           if (this._rule.default) {
             return this.getDefault();
@@ -351,7 +354,7 @@ export class ValidatorItem {
             throw new ValidatorError(this.label, 'missing or invalid');
           }
         }
-        return valAsInt;
+        return this.applyNumberLimitTests(valAsInt);
       }
       let valAsFloat: any = parseFloat(val);
       if (isNaN(valAsFloat)) {
@@ -362,7 +365,7 @@ export class ValidatorItem {
           throw new ValidatorError(this.label, 'missing or invalid');
         }
       }
-      return valAsFloat;
+      return this.applyNumberLimitTests(valAsFloat);
     }
     if (this._rule.default) {
       return this.getDefault();
@@ -619,8 +622,12 @@ export class ValidatorItem {
 export class ValidatorInput extends ValidatorItem {
   constructor(parent: Validator, value: any, fnFromData?: Callback) {
     value = hasValue(value) ? value : '';
-    if (isString(value) && value.length > 0) {
-      value = value.trim();
+    if (isString(value)) {
+      if (value.length > 0) {
+        value = value.trim();
+      }
+    } else {
+      value = String(value);
     }
     super(parent, 'input', value);
   }
