@@ -19,18 +19,19 @@ describe('validator property', () => {
       },
     };
     const RESPONSE = {
-      a: RULE.main.properties.a.min + 3
+      a: RULE.main.properties.a.min + 3,
+      d: RULE.main.properties.d.min + 27.25
     };
     const EXPECTED = {
       response: {
-        a: RULE.main.properties.a.min + 3,
+        a: RESPONSE.a,
+        d: RESPONSE.d,
         e: RULE.main.properties.e.default
       }
     };
 
     it('integer strict default', () => {
       let changes: GenericObject = {};
-      let num = RULE.main.properties.a.min + 3;
       let validator = new Validator(changes);
       validator.response(RESPONSE).name('response').validate(RULE.main);
       expect(validator.hasErrors).toBe(false);

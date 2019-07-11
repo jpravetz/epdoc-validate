@@ -105,7 +105,7 @@ export class ValidatorItem {
     if (!this._name && this._rule.name) {
       this._name = this._rule.name;
     }
-    if( !this._name ) {
+    if (!this._name) {
       throw new Error('Must specify a name for the value being tested, either within the Rule or via name() method')
     }
     if (!this._label && this._rule.label) {
@@ -170,22 +170,25 @@ export class ValidatorItem {
 
   apply() {
     let methodName = APPLY_METHOD[this._rule.type];
-    let val: any;
     if (!methodName || !isFunction(this[methodName])) {
       throw new Error(`Invalid type '${this._rule.type}'`);
     }
     try {
-      this._value = this[methodName](this._value);
+      let val:any = this[methodName](this._value);
+      if( val !== undefined ) {
+        this._value = val;
+      }
     } catch (err) {
       this._errors.push(err);
     }
     if (this._rule.type === 'object' && this._rule.properties) {
       Object.keys(this._rule.properties).forEach(prop => {
         try {
-          let item = new ValidatorItem(this._parent, this._role, val[prop]);
+          let item = new ValidatorItem(this._parent, this._role, this._value[prop]);
           item.rule(this._rule.properties[prop])
-            .apply();
-          if (item.hasErrors) {
+            .name(prop)
+            .validate();
+          if (item.hasErrors()) {
             this._errors.concat(item.errors);
           }
         } catch (err) {
@@ -194,9 +197,9 @@ export class ValidatorItem {
       });
     }
     if (methodName === 'array' && this._rule.arrayType) {
-      for (let idx = 0; idx < val.length; ++idx) {
+      for (let idx = 0; idx < this._value.length; ++idx) {
         try {
-          let item = new ValidatorItem(this._parent, this._role, val[idx]);
+          let item = new ValidatorItem(this._parent, this._role, this._value[idx]);
           item.rule(this._rule.arrayType)
             .apply();
           if (item.hasErrors) {
