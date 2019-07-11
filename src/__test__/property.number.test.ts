@@ -22,16 +22,17 @@ describe('validator property', () => {
       a: RULE.main.properties.a.min + 3
     };
     const EXPECTED = {
-      a: RULE.main.properties.a.min + 3,
-      e: RULE.main.properties.e.default
+      response: {
+        a: RULE.main.properties.a.min + 3,
+        e: RULE.main.properties.e.default
+      }
     };
 
     it('integer strict default', () => {
       let changes: GenericObject = {};
       let num = RULE.main.properties.a.min + 3;
       let validator = new Validator(changes);
-      validator.response(RESPONSE).validate(RULE.main);
-      expect(validator.errors[0]).toEqual({ key: 'b', type: 'missing or invalid' });
+      validator.response(RESPONSE).name('response').validate(RULE.main);
       expect(validator.hasErrors).toBe(false);
       expect(changes).toEqual(EXPECTED);
     });

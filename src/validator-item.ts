@@ -105,6 +105,9 @@ export class ValidatorItem {
     if (!this._name && this._rule.name) {
       this._name = this._rule.name;
     }
+    if( !this._name ) {
+      throw new Error('Must specify a name for the value being tested, either within the Rule or via name() method')
+    }
     if (!this._label && this._rule.label) {
       this._label = this._rule.label;
     }
@@ -130,7 +133,7 @@ export class ValidatorItem {
 
   _validate() {
     // First test if empty and required, or present and strict and not optional
-    if (!this.hasValue(this._value)) {
+    if (!this.hasValue()) {
       if (this._rule.default) {
         this._value = this._rule.default;
         return this;
@@ -168,7 +171,7 @@ export class ValidatorItem {
   apply() {
     let methodName = APPLY_METHOD[this._rule.type];
     let val: any;
-    if (!methodName) {
+    if (!methodName || !isFunction(this[methodName])) {
       throw new Error(`Invalid type '${this._rule.type}'`);
     }
     try {
@@ -397,7 +400,7 @@ export class ValidatorItem {
     return val;
   }
 
-  applyDate(val) {
+  dateApply(val) {
     if (isDate(val)) {
       return this.applyDateLimitTests(val);
     }
@@ -446,7 +449,7 @@ export class ValidatorItem {
     return val;
   }
 
-  applyObject(val) {
+  objectApply(val) {
     if (isObject(val)) {
       return val;
     }

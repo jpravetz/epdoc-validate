@@ -13,7 +13,7 @@ Validation module
 
 ## Usage
 
-```
+```js
 const RULES = {
   title: { type: 'string' },
   opacity: { type: 'number', min: 0, max: 1, default: 1 },
@@ -29,4 +29,18 @@ validator.name('title').input('new title').validate(RULES.title);
 validator.name('opacity').input(0.5).validate(RULES.opacity);
 console.log(changes);
 # changes = { title: 'new title' };
+```
+
+## Dev
+
+To build and watch
+
+```sh
+npm run dev
+```
+
+To run tests
+
+```sh
+npm test
 ```
