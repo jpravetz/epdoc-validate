@@ -31,6 +31,7 @@ export class ValidatorItem {
   protected _role: string;
   protected _value: any;
   protected _rule: ValidatorRule;
+  protected _refDoc: GenericObject;
 
   // track errors here for objects with properties, so we collect them all before failing
   protected _errors: ValidatorError[];
@@ -97,10 +98,15 @@ export class ValidatorItem {
   }
 
   /**
-   * Validate this._value. Errors are added to this._parent.errors
-   * @param {GenericObject} rule
+   * Validate this._value. Errors in the value and it's descendant propeties are
+   * added to this._parent.errors. Errors in how this validation is called (eg.
+   * rules) result in an exception.
+   * @param [rule] Cast to a ValidatorRule. If not specified then must be
+   * specified using the rule() method.
    */
   validate(rule?: GenericObject) {
+
+    // Setup all the variables needed
     this._rule = rule ? new ValidatorRule(rule) : this._rule;
     if (!this._name && this._rule.name) {
       this._name = this._rule.name;
@@ -115,8 +121,9 @@ export class ValidatorItem {
       this._label = this._name;
     }
 
-    this._validate();
+    this.valueApply();
 
+    // Look at the results and pass them upstream to parent
     if (this._errors.length) {
       this._parent.addErrors(this._errors);
       this._errors = [];
@@ -124,15 +131,17 @@ export class ValidatorItem {
       if (this._parent.ref[this._rule.name] !== this._value) {
         this._parent.changes[this._name] = this._value;
       }
-    } else if (this._rule.appendToArray) {
-      this._parent.changes[this._name].push(this._value);
-    } else {
-      this._parent.changes[this._name] = this._value;
+    } else if (this._parent.changes) {
+      if (this._rule.appendToArray) {
+        this._parent.changes[this._name].push(this._value);
+      } else {
+        this._parent.changes[this._name] = this._value;
+      }
     }
   }
 
-  _validate() {
-    // First test if empty and required, or present and strict and not optional
+  valueApply() {
+    // First test if value is empty and required, or if present and strict and not optional
     if (!this.hasValue()) {
       if (this._rule.default) {
         this._value = this._rule.default;
@@ -146,42 +155,48 @@ export class ValidatorItem {
       return this;
     }
 
-    // Now test the actual value
-    let test = this.apply();
-    if (this._errors.length) {
-      if (this._rule.default) {
-        this._value = this._rule.default;
-      }
-    } else {
-      if (this._parent.reference) {
-        if (this._parent.reference[this._rule.name] !== this._value) {
-          this._parent.changes[this._name] = this._value;
-        }
-      } else if (this._rule.appendToArray) {
-        this._parent.changes[this._name].push(this._value);
-      } else {
-        this._parent.changes[this._name] = this._value;
-      }
-    }
-    //console.log(`validate ${value}`, this.changes);
-    return this;
-  }
-
-
-  apply() {
+    // Now call a type-specific validator on the value
     let methodName = APPLY_METHOD[this._rule.type];
     if (!methodName || !isFunction(this[methodName])) {
-      throw new Error(`Invalid type '${this._rule.type}'`);
+      // This is an error in the rule (not the value) so throw an exception
+      throw new Error(`Invalid rule type '${this._rule.type}'`);
     }
     try {
-      let val:any = this[methodName](this._value);
-      if( val !== undefined ) {
-        this._value = val;
-      }
+      this._value = this[methodName](this._value);
     } catch (err) {
       this._errors.push(err);
     }
+
+    // If there is an error in the value, we are done
+    if (this._errors.length) {
+      // Use the default if there is an error
+      if (this._rule.default) {
+        this._value = this._rule.default;
+      }
+      return this;
+    }
+
+    // If no error in the value, continue to process descendant properties
+    this.propertiesApply()
+      .arrayApply();
+
+    // Add value to parent.changes if there is a reference document against which to compare
+    if (this._refDoc) {
+      if (this._refDoc[this._rule.name] !== this._value) {
+        this._parent.changes[this._name] = this._value;
+      }
+    } else if (this._rule.appendToArray) {
+      this._parent.changes[this._name].push(this._value);
+    } else {
+      this._parent.changes[this._name] = this._value;
+    }
+
+    return this;
+  }
+
+  propertiesApply() {
     if (this._rule.type === 'object' && this._rule.properties) {
+      let errors = [];
       Object.keys(this._rule.properties).forEach(prop => {
         try {
           let item = new ValidatorItem(this._parent, this._role, this._value[prop]);
@@ -189,19 +204,29 @@ export class ValidatorItem {
             .name(prop)
             .validate();
           if (item.hasErrors()) {
-            this._errors.concat(item.errors);
+            errors.concat(item.errors);
+          } else if (item.value !== undefined) {
+            this._value[prop] = item.value;
           }
         } catch (err) {
-          this._errors.push(err);
+          errors.push(err);
         }
       });
+      if (errors.length) {
+        this._errors.concat(errors);
+      }
     }
-    if (methodName === 'array' && this._rule.arrayType) {
+    return this;
+  }
+
+  // TODO verify the functionality of this method
+  arrayApply() {
+    if (this._rule.type === 'array' && this._rule.arrayType) {
       for (let idx = 0; idx < this._value.length; ++idx) {
         try {
           let item = new ValidatorItem(this._parent, this._role, this._value[idx]);
           item.rule(this._rule.arrayType)
-            .apply();
+            .valueApply();
           if (item.hasErrors) {
             this._errors.concat(item.errors);
           }
@@ -210,6 +235,7 @@ export class ValidatorItem {
         }
       }
     }
+    return this;
   }
 
   nullApply(val) {
@@ -491,138 +517,7 @@ export class ValidatorItem {
       return this._rule.default(this._value, this._rule);
     }
     return this._rule.default;
-  }  /**
-   * Verify that val is one of the basic types
-   * @param val
-   * @param type {String} One of 'array'
-   * @returns {boolean}
-   */
-  // static validateType(val, type) {
-  //   if (isRegExp(type)) {
-  //     return type.test(val);
-  //   } else {
-  //     let types = Array.isArray(type) ? type : [];
-  //     if (isString(type)) {
-  //       types = type.split('|');
-  //     }
-  //     for (let tdx = 0; tdx < types.length; tdx++) {
-  //       let t = types[tdx];
-  //       if (ValidatorItem.validatePrimitiveType(val, t)) {
-  //         return true;
-  //       }
-  //     }
-  //   }
-  //   return false;
-  // }
-
-  /**
-   * Validate a value by sanitizing (to string, to integer, using function),
-   * limit testing (min, max) and test the value against a type or RegExp.
-   * Functions are called with parameters (val, ruleDef).
-   * @param val {string|number|
-   * @param ruleDef
-   * @param ruleDef.label {string}
-   * @param ruleDef.type {string|Regex} one of 'string', 'int', integer',
-   * 'float', 'number', 'boolean', 'array', 'date', 'object'. Must be set unless
-   * ruleDef.sanitize === 'integer'
-   * @param ruleDef.default {*} - If set, and val does not pass ruleDef, then
-   * set the return value to ruleDef.default.
-   * @param ruleDef.sanitize {String|function} If a string, must be one of the
-   * valid ruleDef types, and the value will be cast to that type
-   * @param ruleDef.min {number} min string length or integer value
-   * @param ruleDef.max {number} max string length or integer value
-   * @returns { value: value, error: {string} } Returns a translated error
-   *   string or sanitized value if no error
-   */
-  static applyRuleDef_deprecated(val, ruleDef) {
-    let label = ruleDef.label ? ruleDef.label : ruleDef.name;
-    // Deal with booleans
-    if (REGEX.boolean.test(ruleDef.type)) {
-      if (isBoolean(val)) {
-        return { value: val };
-      }
-      if (ruleDef.strict) {
-        if (ruleDef.default) {
-          return { value: ruleDef.default };
-        }
-        return { error: new ValidatorError(name, 'numMax', { max: ruleDef.max }) };
-      }
-    } else if (isNumber(val) && val > 0) {
-      return { value: true };
-    } else if (isString(val) && REGEX.isTrue.test(val)) {
-      return { value: true };
-    }
-
-
-    let typeIs = {
-      string: REGEX.string.test(ruleDef.type),
-      number: REGEX.number.test(ruleDef.type),
-      object: REGEX.object.test(ruleDef.type),
-      boolean: REGEX.boolean.test(ruleDef.type)
-    };
-    // Sanitize the value if ruleDef.sanitize
-    if (isFunction(ruleDef.sanitize)) {
-      val = ruleDef.sanitize(val, ruleDef);
-    } else if (ruleDef.sanitize === 'string') {
-      val = isString(val) ? val : String(val);
-    } else if (isString(ruleDef.sanitize) && REGEX.integer.test(ruleDef.sanitize)) {
-      val = parseInt(val, 10);
-    } else if (typeIs.string && !isString(val) && val !== undefined && val !== null) {
-      val = String(val);
-    } else if (typeIs.boolean && !isBoolean(val)) {
-      if (isBoolean(val)) {
-        return { value: val };
-      }
-      if (isNumber(val) && val > 0) {
-        return { value: true };
-      } else if (isString(val) && REGEX.isTrue.test(val)) {
-        return { value: true };
-      } else if (ruleDef.default === true) {
-        return { value: true };
-      }
-      val = false;
-    }
-
-    if (typeIs.number || ruleDef.sanitize === 'integer') {
-      // Check min/max of numbers
-      if (val > ruleDef.max) {
-        if (isNumber(ruleDef.default)) {
-          return { value: ruleDef.default };
-        } else if (ruleDef.default === true) {
-          return { value: ruleDef.min };
-        } else if (isFunction(ruleDef.default)) {
-          return { value: ruleDef.default(val, ruleDef) };
-        }
-        return { error: new ValidatorError(ruleDef.label, 'numMax', { max: ruleDef.max }) };
-      }
-      if (val < ruleDef.min) {
-        if (isNumber(ruleDef.default)) {
-          return { value: ruleDef.default };
-        } else if (ruleDef.default === true) {
-          return { value: ruleDef.max };
-        } else if (isFunction(ruleDef.default)) {
-          return { value: ruleDef.default(val, ruleDef) };
-        }
-        return { error: new ValidatorError(ruleDef.label, 'numMin', { min: ruleDef.min }) };
-      }
-    } else if (!typeIs.object && !typeIs.boolean) {
-      // Check min/max of string length or num
-      if (isInteger(ruleDef.max) && val.length > ruleDef.max) {
-        return { error: new ValidatorError(ruleDef.label, 'lenMax', { max: ruleDef.max }) };
-      }
-      if (isInteger(ruleDef.min) && val.length < ruleDef.min) {
-        return { error: new ValidatorError(ruleDef.label, 'lenMin', { min: ruleDef.min }) };
-      }
-    }
-
-    // if (!ValidatorItem.validateType(val, ruleDef.type)) {
-    //   return { error: new ValidatorError(ruleDef.label, 'invalid') };
-    // }
-
-    return { value: val };
-  }
-
-
+  } 
 }
 
 export class ValidatorInput extends ValidatorItem {
@@ -636,6 +531,9 @@ export class ValidatorInput extends ValidatorItem {
       value = String(value);
     }
     super(parent, 'input', value);
+    if (parent.ref) {
+      this._refDoc = parent.ref;
+    }
   }
 
   hasValue(): boolean {
@@ -646,6 +544,9 @@ export class ValidatorInput extends ValidatorItem {
 export class ValidatorOption extends ValidatorItem {
   constructor(parent: Validator, value: any) {
     super(parent, 'option', value);
+    if (parent.ref) {
+      this._refDoc = parent.ref;
+    }
   }
 }
 

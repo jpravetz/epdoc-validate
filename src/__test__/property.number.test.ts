@@ -20,7 +20,7 @@ describe('validator property', () => {
     };
     const RESPONSE = {
       a: RULE.main.properties.a.min + 3,
-      d: RULE.main.properties.d.min + 27.25
+      d: RULE.main.properties.d.min + 27
     };
     const EXPECTED = {
       response: {
