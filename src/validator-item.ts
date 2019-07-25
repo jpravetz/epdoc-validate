@@ -2,6 +2,7 @@ import { Validator } from './validator';
 import { ValidatorError } from './validator-error';
 import { isBoolean, isNumber, isObject, isRegExp, isString, isInteger, isFunction, isDate, GenericObject, Callback, hasValue, deepCopy, validateType } from './lib/util';
 import { ValidatorRule } from './validator-rule';
+import { ValidatorBase } from './validator-base';
 
 const REGEX = {
   string: /^(string)$/,
@@ -25,24 +26,20 @@ const APPLY_METHOD = {
   array: 'arrayApply'
 };
 
+export class ValidatorItem extends ValidatorBase {
 
-export class ValidatorItem {
-  protected _parent: Validator;
-  protected _role: string;
   protected _value: any;
   protected _rule: ValidatorRule;
+  protected _changes: GenericObject;
   protected _refDoc: GenericObject;
 
   // track errors here for objects with properties, so we collect them all before failing
-  protected _errors: ValidatorError[];
   protected _name: string;
   protected _label: string;
 
-  constructor(parent: Validator, role: string, value: any) {
-    this._parent = parent;
-    this._role = role;
+  constructor(value: any, parent?: ValidatorBase) {
+    super(parent);
     this._value = value;
-    this._errors = [];
   }
 
   name(name) {
@@ -62,10 +59,6 @@ export class ValidatorItem {
     return this._errors;
   }
 
-  hasErrors(): boolean {
-    return this._errors.length ? true : false;
-  }
-
   get value() {
     return this._value;
   }
@@ -75,6 +68,14 @@ export class ValidatorItem {
    */
   hasValue() {
     return hasValue(this._value);
+  }
+
+  set changes(val) {
+    this._changes = val;
+  }
+
+  set refDoc(val) {
+    this._refDoc = val;
   }
 
   /**
@@ -87,14 +88,6 @@ export class ValidatorItem {
       this._value = rule.fromView(this._value);
     }
     return this;
-  }
-
-  validateProperty(obj: any, name: string, ruleDef: ValidatorRule, opts: GenericObject = {}) {
-    if (!obj[name] && opts.required) {
-      return new ValidatorError(name, 'missing');
-    } else if (obj[name] && !validateType(obj[name], ruleDef.type)) {
-      return new ValidatorError(name, 'type');
-    }
   }
 
   /**
@@ -111,9 +104,6 @@ export class ValidatorItem {
     if (!this._name && this._rule.name) {
       this._name = this._rule.name;
     }
-    if (!this._name) {
-      throw new Error('Must specify a name for the value being tested, either within the Rule or via name() method')
-    }
     if (!this._label && this._rule.label) {
       this._label = this._rule.label;
     }
@@ -125,26 +115,19 @@ export class ValidatorItem {
 
     // Look at the results and pass them upstream to parent
     if (this._errors.length) {
-      this._parent.addErrors(this._errors);
-      this._errors = [];
-    } else if (this._parent.ref) {
-      if (this._parent.ref[this._rule.name] !== this._value) {
-        this._parent.changes[this._name] = this._value;
-      }
-    } else if (this._parent.changes) {
-      if (this._rule.appendToArray) {
-        this._parent.changes[this._name].push(this._value);
-      } else {
-        this._parent.changes[this._name] = this._value;
+      if (this.parent) {
+        this.parent.addErrors(this._errors);
+        this._errors = [];
       }
     }
+    return this;
   }
 
   valueApply() {
     // First test if value is empty and required, or if present and strict and not optional
     if (!this.hasValue()) {
       if (this._rule.default) {
-        this._value = this._rule.default;
+        this._result = this._rule.default;
         return this;
       } else if (this._rule.required) {
         this._errors.push(new ValidatorError(this._label, 'missing'));
@@ -162,81 +145,52 @@ export class ValidatorItem {
       throw new Error(`Invalid rule type '${this._rule.type}'`);
     }
     try {
-      this._value = this[methodName](this._value);
+      this[methodName](this._value);
     } catch (err) {
       this._errors.push(err);
     }
 
     // If there is an error in the value, we are done
     if (this._errors.length) {
-      // Use the default if there is an error
-      if (this._rule.default) {
-        this._value = this._rule.default;
+      // Use the default if there is one
+      if (this._rule.default && !this._rule.strict) {
+        this._result = this._rule.default;
+        return this;
       }
-      return this;
     }
 
-    // If no error in the value, continue to process descendant properties
-    this.propertiesApply()
-      .arrayApply();
+    return this.validationApply();
+  }
 
-    // Add value to parent.changes if there is a reference document against which to compare
-    if (this._refDoc) {
-      if (this._refDoc[this._rule.name] !== this._value) {
-        this._parent.changes[this._name] = this._value;
-      }
-    } else if (this._rule.appendToArray) {
-      this._parent.changes[this._name].push(this._value);
-    } else {
-      this._parent.changes[this._name] = this._value;
-    }
-
+  /**
+   * Called if validation suceeds on the value, allows us to attach results to
+   * changes, or compare against reference values.
+   */
+  validationApply() {
     return this;
   }
 
-  propertiesApply() {
-    if (this._rule.type === 'object' && this._rule.properties) {
-      let errors = [];
-      Object.keys(this._rule.properties).forEach(prop => {
-        try {
-          let item = new ValidatorItem(this._parent, this._role, this._value[prop]);
-          item.rule(this._rule.properties[prop])
-            .name(prop)
-            .validate();
-          if (item.hasErrors()) {
-            errors.concat(item.errors);
-          } else if (item.value !== undefined) {
-            this._value[prop] = item.value;
-          }
-        } catch (err) {
-          errors.push(err);
+  /**
+   * Adds values to changes, if it exists. Does so conditionally if refDoc is
+   * specified.
+   */
+  changesApply() {
+    if (this._changes) {
+      if (this._refDoc) {
+        if (this._refDoc[this._rule.name] !== this._value) {
+          this._changes[this._name] = this._value;
         }
-      });
-      if (errors.length) {
-        this._errors.concat(errors);
-      }
-    }
-    return this;
-  }
-
-  // TODO verify the functionality of this method
-  arrayApply() {
-    if (this._rule.type === 'array' && this._rule.arrayType) {
-      for (let idx = 0; idx < this._value.length; ++idx) {
-        try {
-          let item = new ValidatorItem(this._parent, this._role, this._value[idx]);
-          item.rule(this._rule.arrayType)
-            .valueApply();
-          if (item.hasErrors) {
-            this._errors.concat(item.errors);
-          }
-        } catch (err) {
-          this._errors.push(err);
+      } else {
+        if (this._rule.appendToArray) {
+          this._changes[this._name].push(this._value);
+        } else {
+          this._changes[this._name] = this._value;
         }
       }
     }
     return this;
   }
+
 
   nullApply(val) {
     if (val === null) {
@@ -353,58 +307,67 @@ export class ValidatorItem {
    * Apply this._rule to val returning a number or throwing an error.
    * @param {*} val
    */
-  numberApply(val: any) {
+  numberApply(val: any): ValidatorItem {
     let isInt: boolean = REGEX.integer.test(this._rule.type);
     if (isNumber(val)) {
       if (isInt) {
         if (isFunction(this._rule.sanitize)) {
           val = this._rule.sanitize(val, this._rule);
-          return this.applyNumberLimitTests(val);
+          this._result = this.applyNumberLimitTests(val);
+          return this;
         }
         if (this._rule.sanitize === true) {
           val = Math.round(val);
-          return this.applyNumberLimitTests(val);
+          this._result = this.applyNumberLimitTests(val);
+          return this;
         }
         if (isString(this._rule.sanitize) && isFunction(Math[this._rule.sanitize])) {
           val = Math[this._rule.sanitize](val);
-          return this.applyNumberLimitTests(val);
+          this._result = this.applyNumberLimitTests(val);
+          return this;
         }
         if (Math.round(val) !== val) {
           throw new ValidatorError(this.label, 'invalid');
         }
       }
-      return this.applyNumberLimitTests(val);
+      this._result = this.applyNumberLimitTests(val);
+      return this;
     }
     if (isString(val)) {
       if (isInt) {
         let valAsInt: any = Math.round(parseFloat(val));
         if (isNaN(valAsInt)) {
           if (this._rule.default) {
-            return this.getDefault();
+            this._result = this.getDefault();
+            return this;
           }
           if (this._rule.required) {
             throw new ValidatorError(this.label, 'missing or invalid');
           }
         }
-        return this.applyNumberLimitTests(valAsInt);
+        this._result = this.applyNumberLimitTests(valAsInt);
+        return this;
       }
       let valAsFloat: any = parseFloat(val);
       if (isNaN(valAsFloat)) {
         if (this._rule.default) {
-          return this.getDefault();
+          this._result = this.getDefault();
+          return this;
         }
         if (this._rule.required) {
           throw new ValidatorError(this.label, 'missing or invalid');
         }
       }
-      return this.applyNumberLimitTests(valAsFloat);
+      this._result = this.applyNumberLimitTests(valAsFloat);
     }
     if (this._rule.default) {
-      return this.getDefault();
+      this._result = this.getDefault();
+      return this;
     }
     if (this._rule.required) {
       throw new ValidatorError(this.label, 'missing or invalid');
     }
+    return this;
   }
 
   applyNumberLimitTests(val) {
@@ -478,9 +441,11 @@ export class ValidatorItem {
     return val;
   }
 
-  objectApply(val) {
+  objectApply(val): ValidatorItem {
     if (isObject(val)) {
-      return val;
+      this._result = {};
+      this.propertiesApply();
+      return this;
     }
     if (hasValue(val)) {
       if (isFunction(this._rule.sanitize)) {
@@ -497,12 +462,61 @@ export class ValidatorItem {
     if (this._rule.required) {
       throw new ValidatorError(this._label, 'missing');
     }
-    return val;
+    return this;
   }
 
-  applyObjectProperties(val) {
-
+  propertiesApply() {
+    if (this._rule.type === 'object' && this._rule.properties) {
+      let errors = [];
+      Object.keys(this._rule.properties).forEach(prop => {
+        try {
+          let item = new ValidatorItem(this._value[prop]);
+          item.rule(this._rule.properties[prop])
+            .name(prop)
+            .validate();
+          if (item.hasErrors()) {
+            errors.concat(item.errors);
+          } else if (item.value !== undefined) {
+            this._result[prop] = item.value;
+          }
+        } catch (err) {
+          errors.push(err);
+        }
+      });
+      if (errors.length) {
+        this._errors.concat(errors);
+      }
+    }
+    return this;
   }
+
+  // TODO verify the functionality of this method
+  arrayApply(val): ValidatorItem {
+    if (Array.isArray(val)) {
+      this._result = [];
+      if (this._rule.arrayType) {
+        this._result = [];
+        for (let idx = 0; idx < this._value.length; ++idx) {
+          try {
+            let item = new ValidatorItem(this._value[idx]);
+            item.rule(this._rule.arrayType)
+              .valueApply();
+            if (item.hasErrors) {
+              this._errors.concat(item.errors);
+            } else {
+              this._result.push(item.result);
+            }
+          } catch (err) {
+            this._errors.push(err);
+          }
+        }
+      } else {
+        this._result = val;
+      }
+    }
+    return this;
+  }
+
 
   fnOrVal(fn, ...args) {
     if (isFunction(fn)) {
@@ -517,41 +531,12 @@ export class ValidatorItem {
       return this._rule.default(this._value, this._rule);
     }
     return this._rule.default;
-  } 
-}
-
-export class ValidatorInput extends ValidatorItem {
-  constructor(parent: Validator, value: any, fnFromData?: Callback) {
-    value = hasValue(value) ? value : '';
-    if (isString(value)) {
-      if (value.length > 0) {
-        value = value.trim();
-      }
-    } else {
-      value = String(value);
-    }
-    super(parent, 'input', value);
-    if (parent.ref) {
-      this._refDoc = parent.ref;
-    }
   }
 
-  hasValue(): boolean {
-    return this._value && this._value.length > 0;
-  }
+  // applyObjectProperties(val) {
+
+  // }
+
 }
 
-export class ValidatorOption extends ValidatorItem {
-  constructor(parent: Validator, value: any) {
-    super(parent, 'option', value);
-    if (parent.ref) {
-      this._refDoc = parent.ref;
-    }
-  }
-}
 
-export class ValidatorResponse extends ValidatorItem {
-  constructor(parent: Validator, value: any) {
-    super(parent, 'response', value);
-  }
-}

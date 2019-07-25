@@ -18,7 +18,7 @@ describe('validator input', () => {
     it('pass', () => {
       let changes: GenericObject = {};
       let num = RULE.number.min + 3;
-      let validator = new Validator(changes);
+      let validator = new InputValidator(changes);
       validator.input(num).name('a').validate(RULE.number)
       expect(validator.hasErrors).toBe(false);
       expect(changes.a).toBe(num);
@@ -26,7 +26,7 @@ describe('validator input', () => {
 
     it('max fail', () => {
       let changes: GenericObject = {};
-      let validator = new Validator(changes);
+      let validator = new InputValidator(changes);
       validator.input(RULE.number.max + 42).name('a').validate(RULE.number)
       expect(validator.hasErrors).toBe(true);
       expect(validator.errors.length).toBe(1);
@@ -37,7 +37,7 @@ describe('validator input', () => {
     it('min fail', () => {
       let changes: GenericObject = {};
       let num = RULE.number.min - 42.3;
-      let validator = new Validator(changes);
+      let validator = new InputValidator(changes);
       validator.input(num).name('a').validate(RULE.number)
       expect(validator.hasErrors).toBe(true);
       expect(validator.errors.length).toBe(1);
@@ -48,7 +48,7 @@ describe('validator input', () => {
     it('default', () => {
       let changes: GenericObject = {};
       let num = RULE.number5.min + 3;
-      let validator = new Validator(changes);
+      let validator = new InputValidator(changes);
       validator.input(String(num)).name('a').validate(RULE.number5)
       validator.input(undefined).name('b').validate(RULE.number5)
       expect(validator.hasErrors).toBe(false);
@@ -61,7 +61,7 @@ describe('validator input', () => {
       it('pass', () => {
         let changes: GenericObject = {};
         let num = RULE.integer.min + 3;
-        let validator = new Validator(changes);
+        let validator = new InputValidator(changes);
         validator.input(num).name('a').validate(RULE.integer)
         expect(validator.hasErrors).toBe(false);
         expect(changes.a).toBe(num);
@@ -70,7 +70,7 @@ describe('validator input', () => {
       it('min fail', () => {
         let changes: GenericObject = {};
         let num = RULE.integer.min - 42;
-        let validator = new Validator(changes);
+        let validator = new InputValidator(changes);
         validator.input(num).name('a').validate(RULE.integer)
         expect(validator.hasErrors).toBe(true);
         expect(validator.errors.length).toBe(1);
@@ -82,7 +82,7 @@ describe('validator input', () => {
         let changes: GenericObject = {};
         let anum = RULE.integer.min + 0.2;
         let bnum = RULE.integer.min + 0.51;
-        let validator = new Validator(changes);
+        let validator = new InputValidator(changes);
         validator.input(anum).name('a').validate(RULE.integer)
         validator.input(bnum).name('b').validate(RULE.integer)
         expect(validator.hasErrors).toBe(false);
@@ -93,7 +93,7 @@ describe('validator input', () => {
       it('optional pass', () => {
         let changes: GenericObject = {};
         let num = RULE.integer1.min + 3;
-        let validator = new Validator(changes);
+        let validator = new InputValidator(changes);
         validator.input(num).name('a').validate(RULE.integer1)
         expect(validator.hasErrors).toBe(false);
         expect(changes.a).toBe(num);
@@ -102,7 +102,7 @@ describe('validator input', () => {
       it('strict optional fail', () => {
         let changes: GenericObject = {};
         let num = RULE.integer2.min + 3;
-        let validator = new Validator(changes);
+        let validator = new InputValidator(changes);
         validator.input(num).name('a').validate(RULE.integer2)
         expect(validator.hasErrors).toBe(true);
         expect(validator.errors.length).toBe(1);
@@ -113,7 +113,7 @@ describe('validator input', () => {
       it('strict fail', () => {
         let changes: GenericObject = {};
         let num = RULE.integer3.min + 3;
-        let validator = new Validator(changes);
+        let validator = new InputValidator(changes);
         validator.input(num).name('a').validate(RULE.integer3)
         validator.input(undefined).name('b').validate(RULE.integer3)
         expect(validator.hasErrors).toBe(true);
