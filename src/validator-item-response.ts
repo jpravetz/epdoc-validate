@@ -10,15 +10,4 @@ export class ValidatorItemResponse extends ValidatorItem {
   constructor(value: any, parent?: Validator) {
     super(value, parent);
   }
-
-  /**
-   * Called only if the value is valid
-   */
-  validationApply() {
-    if (this._parent) {
-      this._parent.addErrors(this._errors);
-      this._parent.output = this.output;
-    }
-    return this;
-  }
 }

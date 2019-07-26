@@ -175,14 +175,6 @@ export class ValidatorItem extends ValidatorBase {
       }
     }
 
-    return this.validationApply();
-  }
-
-  /**
-   * Called if validation suceeds on the value, allows us to attach results to
-   * changes, or compare against reference values.
-   */
-  validationApply() {
     return this;
   }
 
@@ -492,7 +484,7 @@ export class ValidatorItem extends ValidatorBase {
             .name(prop)
             .validate();
           if (item.hasErrors()) {
-            errors.concat(item.errors);
+            errors = errors.concat(item.errors);
           } else if (item.output !== undefined) {
             this._result[prop] = item.output;
           }
@@ -501,7 +493,7 @@ export class ValidatorItem extends ValidatorBase {
         }
       });
       if (errors.length) {
-        this._errors.concat(errors);
+        this.addErrors(errors);
       }
     }
     return this;

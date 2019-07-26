@@ -1,5 +1,5 @@
 import { ResponseValidator } from '../response-validator';
-import { GenericObject } from '../lib/util';
+import { GenericObject, deepCopy } from '../lib/util';
 
 describe('response', () => {
   describe('primitive', () => {
@@ -37,39 +37,48 @@ describe('response', () => {
   describe('object', () => {
     describe('number', () => {
       const RULE = {
-        main: {
-          type: 'object',
-          properties: {
-            a: { type: 'integer', min: 5, max: 10 },
-            b: { type: 'integer', min: 5, max: 100, optional: true, strict: true },
-            c: { type: 'integer', min: 5, max: 100, strict: true },
-            d: { type: 'integer', min: 5, max: 100, strict: true, required: true },
-            e: {
-              type: 'number',
-              min: 5,
-              max: 100,
-              strict: true,
-              required: true,
-              default: 11.3
-            }
+        type: 'object',
+        properties: {
+          a: { type: 'integer', min: 5, max: 10 },
+          b: { type: 'integer', min: 5, max: 100, optional: true, strict: true },
+          c: { type: 'integer', min: 5, max: 100, strict: true },
+          d: { type: 'integer', min: 5, max: 100, strict: true, required: true },
+          e: {
+            type: 'number',
+            min: 5,
+            max: 100,
+            strict: true,
+            required: true,
+            default: 11.3
           }
         }
       };
       const RESPONSE = {
-        a: RULE.main.properties.a.min + 3,
-        d: RULE.main.properties.d.min + 27
+        a: RULE.properties.a.min + 3,
+        d: RULE.properties.d.min + 27
       };
       const EXPECTED = {
         a: RESPONSE.a,
         d: RESPONSE.d,
-        e: RULE.main.properties.e.default
+        e: RULE.properties.e.default
       };
 
       it('integer strict default', () => {
         let validator = new ResponseValidator();
-        validator.input(RESPONSE).validate(RULE.main);
+        validator.input(RESPONSE).validate(RULE);
         expect(validator.hasErrors()).toBe(false);
         expect(validator.output).toEqual(EXPECTED);
+      });
+
+      it('integer strict required no default', () => {
+        let rule = deepCopy(RULE);
+        rule.properties.e.default = undefined;
+        let expected = deepCopy(EXPECTED);
+        expected.e = undefined;
+        let validator = new ResponseValidator();
+        validator.input(RESPONSE).validate(rule);
+        expect(validator.errors.length).toBe(1);
+        expect(validator.output).toEqual(expected);
       });
     });
   });
