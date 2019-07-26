@@ -25,6 +25,7 @@ There are two main ways to use the validate module.
 - To validate individual UI input values and add them to an update object that
   will be sent to a server to update a document
   - Uses `InputValidator` class
+  - All values will be cast to strings and trimmed of leading and trailing whitespace
 
 ### Example - Validating Server Response
 
@@ -37,7 +38,7 @@ There are two main ways to use the validate module.
 ```js
 const RULES = {
   title: { type: 'string' },
-  opacity: { type: 'number', min: 0, max: 1, default: 1 },
+  opacity: { type: 'number', min: 0, max: 1, default: 1, sanitize: true },
 }
 let changes = {};
 let reference = {
@@ -61,10 +62,10 @@ Rules will have the following options:
 - `label` string - (_optional_), defaults to `name` and is used in errors to
   describe the input
 - `type` string or array of strings or strings separated by '|', (_required_)
-  must be one of the primitive types defined in _validator-item.ts_
-  `APPLY_METHOD`, or one of the pre-defined rules defined in _validator-rule.ts_
-- `pattern` RegExp - (_optional_) used to validate value
-- `sanitize`
+  must be one of the primitive types listed below
+- `format` string - (_optional_) can be used to specify a predefined format
+- `pattern` RegExp or Function - (_optional_) used to validate value
+- `sanitize` Function, boolean or string - See below for more details
 - `default` (_optional_) default value to use if value is invalid or missing
 - `min` number - (_optional_) minimum string length or minimum number value
 - `max` number - (_optional_) maximum string length or maximum number value
@@ -86,29 +87,28 @@ Experimental Values (may be deprecated):
 
 ### Option Notes
 
-#### type, pattern
+#### type, format, pattern
 
-- Must be one of
-  - the primitive types
-    - `string`
-    - `boolean`
-    - `number`
-    - `int` or `integer` - a number that is not a float
-    - `date`
-    - `null`
-    - `object`
-    - `array`
-    - `any`
-  - a predefined type
-    - `url`
-    - `email`
-    - `filename`
-    - `username`
-    - TODO: allow users to add their own predefined types
+- Type must be one of the following primitive types
+  - `string`
+  - `boolean`
+  - `number`
+  - `int` or `integer` - a number that is not a float
+  - `date`
+  - `null`
+  - `object`
+  - `array`
+  - `any`
+- Format must be one of the following predefined formats
+  - `url`
+  - `email`
+  - `filename`
+  - `username`
+  - TODO: allow users to add their own predefined types
 - If a predefined type, rule options set by the caller are merged with rule
   options set for the pre-defined rule
 - Predefined rules often use the `pattern` option to specify _RegExp_
-  expresssions to use to validate string inputs
+  expresssions or a function to use to validate string inputs
 
 #### name, label
 
@@ -127,6 +127,9 @@ Experimental Values (may be deprecated):
 - When a `default` value is provided:
   - the default value will be used if the value is missing or invalid
   - `strict`, `required` and `optional` are ignored
+  - `default` can be
+    - a value
+    - a function that is called with value, `ValidatorRule`
 
 #### strict, required, optional
 
@@ -134,6 +137,19 @@ Experimental Values (may be deprecated):
   `optional` are allowed on an object
   - As an example, if `strict` is true and no default is set, and the value is
     not set, then a _missing property_ error will be registered.
+
+### sanitize
+
+The `sanitize` option can be one of
+
+- function - called with value, `ValidatorRule`, returns the new value
+- boolean - if true will cast or otherwise munge the input value to type
+- string - can be one of:
+  - boolean - will attempt to munge the input value into a boolean
+
+Because input is from UI and is assumed to be a string, `sanitize` _should_ be
+set to `true` for all `type` values other than 'string' when using
+`InputValidator`.
 
 ## Dev
 

@@ -52,7 +52,7 @@ const RULE_LIBRARY = {
   description: { type: 'string', pattern: /^.+$/ },
   password: { type: 'string', pattern: FORMAT_LIBRARY.password },
   label: { type: 'string', pattern: /^[a-zA-Z\-\.\s]+$/ },
-  username: { type: 'string', pattern: /^[a-z0-9]+$/ },
+  username: { type: 'string', pattern: /^[a-z0-9]{2,}$/ },
   interaction: { type: 'string', pattern: /^(none|url|clickplay)$/ },
   globalPerm: { type: 'string', pattern: FORMAT_LIBRARY.globalPerm },
   streamStatus: { type: 'string', pattern: /^(upcoming|live|completed)$/ },
@@ -112,8 +112,8 @@ export class ValidatorRule {
   constructor(rule: any) {
     if (isObject(rule)) {
       Object.assign(this, pick(rule, RULE_PARAMS));
-      if (isString(rule.type) && RULE_LIBRARY[rule.type]) {
-        Object.assign(this, RULE_LIBRARY[rule.type]);
+      if (isString(rule.format) && RULE_LIBRARY[rule.format]) {
+        Object.assign(this, RULE_LIBRARY[rule.format]);
       }
       this._recurse(rule);
     } else if (isNonEmptyString(rule)) {

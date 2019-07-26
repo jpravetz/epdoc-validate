@@ -1,16 +1,30 @@
 import {
-  isString, isNonEmptyString, isBoolean, isArray, isInteger, isNumber, isPosNumber,
-  isFunction, isRegExp, isObject, isDate, isNull, isDefined, isError, hasValue,
-  omit, pick, deepEquals
+  isString,
+  isNonEmptyString,
+  isBoolean,
+  isArray,
+  isInteger,
+  isNumber,
+  isPosNumber,
+  isFunction,
+  isRegExp,
+  isObject,
+  isDate,
+  isNull,
+  isDefined,
+  isError,
+  hasValue,
+  omit,
+  pick,
+  deepEquals
 } from '../src/lib/util';
 
 describe('util basic', () => {
-
   const obj = {
     a: 'b',
     c: 'd',
     e: 4
-  }
+  };
 
   it('isString', () => {
     expect(isString('string')).toBe(true);
@@ -21,7 +35,7 @@ describe('util basic', () => {
   });
 
   it('isNonEmptyString', () => {
-    let s = 'my string'
+    let s = 'my string';
     expect(isNonEmptyString(s)).toBe(true);
     expect(s).toEqual('my string');
     expect(isNonEmptyString('')).toBe(false);
@@ -32,6 +46,7 @@ describe('util basic', () => {
   it('isArray', () => {
     expect(isArray(['string'])).toBe(true);
     expect(isArray(4)).toBe(false);
+    expect(isArray({ a: 'string' })).toBe(false);
   });
 
   it('isBoolean', () => {
@@ -48,40 +63,42 @@ describe('util basic', () => {
   it('isPosNumber', () => {
     expect(isPosNumber(4)).toBe(true);
     expect(isPosNumber(NaN)).toBe(false);
-    expect(isPosNumber(-.01)).toBe(false);
+    expect(isPosNumber(-0.01)).toBe(false);
     expect(isPosNumber(0)).toBe(false);
   });
 
   it('isInteger', () => {
     expect(isInteger(4)).toBe(true);
     expect(isInteger(NaN)).toBe(false);
-    expect(isInteger(.2)).toBe(false);
+    expect(isInteger(0.2)).toBe(false);
     expect(isInteger(0)).toBe(true);
     expect(isInteger(-1)).toBe(true);
   });
 
   it('isFunction', () => {
+    expect(isFunction({})).toBe(false);
+    expect(isFunction(3)).toBe(false);
     expect(isFunction(false)).toBe(false);
-    expect(isFunction(() => { })).toBe(true);
+    expect(isFunction(() => {})).toBe(true);
   });
 
   it('isNull', () => {
     expect(isNull(null)).toBe(true);
     expect(isNull(false)).toBe(false);
-    expect(isNull(() => { })).toBe(false);
+    expect(isNull(() => {})).toBe(false);
   });
 
   it('isDefined', () => {
     expect(isDefined(null)).toBe(true);
     expect(isDefined(undefined)).toBe(false);
     expect(isDefined(false)).toBe(true);
-    expect(isDefined(() => { })).toBe(true);
+    expect(isDefined(() => {})).toBe(true);
   });
 
   it('hasValue', () => {
     expect(hasValue('test')).toBe(true);
     expect(hasValue(NaN)).toBe(true);
-    expect(hasValue(.2)).toBe(true);
+    expect(hasValue(0.2)).toBe(true);
     expect(hasValue(0)).toBe(true);
     expect(hasValue(undefined)).toBe(false);
     expect(hasValue(null)).toBe(false);
@@ -93,15 +110,16 @@ describe('util basic', () => {
     expect(isRegExp({})).toBe(false);
     expect(isRegExp(false)).toBe(false);
     expect(isRegExp(Date.now())).toBe(false);
-    expect(isRegExp(() => { })).toBe(false);
+    expect(isRegExp(() => {})).toBe(false);
   });
 
   it('isObject', () => {
     expect(isObject(/^.*$/)).toBe(false);
     expect(isObject({})).toBe(true);
+    expect(isObject([])).toBe(false);
     expect(isObject(false)).toBe(false);
     expect(isRegExp(Date.now())).toBe(false);
-    expect(isObject(() => { })).toBe(false);
+    expect(isObject(() => {})).toBe(false);
     expect(isObject(undefined)).toBe(false);
   });
 
@@ -109,8 +127,9 @@ describe('util basic', () => {
     expect(isDate(/^.*$/)).toBe(false);
     expect(isDate({})).toBe(false);
     expect(isDate(false)).toBe(false);
+    expect(isDate(233433)).toBe(false);
     expect(isDate(new Date())).toBe(true);
-    expect(isDate(() => { })).toBe(false);
+    expect(isDate(() => {})).toBe(false);
   });
 
   it('isError', () => {
@@ -118,7 +137,7 @@ describe('util basic', () => {
     expect(isError({})).toBe(false);
     expect(isError(false)).toBe(false);
     expect(isError(new Error())).toBe(true);
-    expect(isError(() => { })).toBe(false);
+    expect(isError(() => {})).toBe(false);
   });
 
   it('pick and deepEquals', () => {
@@ -140,5 +159,4 @@ describe('util basic', () => {
     let result4 = deepEquals(omit(obj, 'e'), { a: 'b', c: 'f' });
     expect(result4).toBe(false);
   });
-
 });
