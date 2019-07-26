@@ -193,7 +193,7 @@ export class ValidatorItem extends ValidatorBase {
       return this.setResult(this._rule.default(val, this._rule));
     }
     if (this._rule.required) {
-      throw new ValidatorError(this.label, 'null', { reason: 'missing or invalid' });
+      throw new ValidatorError(this.label, 'missing or invalid');
     }
     return this;
   }
@@ -237,9 +237,9 @@ export class ValidatorItem extends ValidatorBase {
       return this.setResult(this._rule.default(val, this._rule));
     }
     if (this._rule.required && val) {
-      throw new ValidatorError(this.label, 'boolean', { reason: 'missing' });
+      throw new ValidatorError(this.label, 'missing');
     }
-    throw new ValidatorError(this.label, 'boolean', { reason: 'invalid' });
+    throw new ValidatorError(this.label, 'invalid');
   }
 
   /**
@@ -266,7 +266,7 @@ export class ValidatorItem extends ValidatorBase {
       return this.applyStringLengthTests(String(val));
     }
     if (this._rule.required) {
-      throw new ValidatorError(this.label, 'string', { reason: 'missing' });
+      throw new ValidatorError(this.label, 'missing');
     }
     return this;
   }
@@ -274,12 +274,12 @@ export class ValidatorItem extends ValidatorBase {
   private applyStringLengthTests(val) {
     if (isRegExp(this._rule.pattern)) {
       if (!this._rule.pattern.test(val)) {
-        throw new ValidatorError(this.label, 'string', { reason: 'invalid' });
+        throw new ValidatorError(this.label, 'invalid');
       }
     }
     if (isFunction(this._rule.pattern)) {
       if (!this._rule.pattern(val, this._rule)) {
-        throw new ValidatorError(this.label, 'string', { reason: 'invalid' });
+        throw new ValidatorError(this.label, 'invalid');
       }
     }
     if (isNumber(this._rule.min) && val.length < this._rule.min) {
@@ -394,11 +394,17 @@ export class ValidatorItem extends ValidatorBase {
         val = this._rule.sanitize(val, this._rule);
         return this.applyDateLimitTests(val);
       }
-      if (this._rule.sanitize === true) {
-        return this.applyDateLimitTests(val);
+      if (this._rule.sanitize === true || this._rule.sanitize === 'date') {
+        if (isString(val) && REGEX.isWholeNumber.test(val)) {
+          val = parseInt(val, 10);
+        }
       }
-      let valAsDate = new Date(val);
-      return this.applyDateLimitTests(valAsDate);
+      try {
+        val = new Date(val);
+        if (!isNaN(val.getTime())) {
+          return this.applyDateLimitTests(val);
+        }
+      } catch (err) {}
     }
     if (isFunction(this._rule.default)) {
       return this._rule.default(val, this._rule);
@@ -409,7 +415,7 @@ export class ValidatorItem extends ValidatorBase {
     if (this._rule.required) {
       throw new ValidatorError(this.label, 'missing or invalid');
     }
-    return val;
+    throw new ValidatorError(this.label, 'invalid');
   }
 
   private applyDateLimitTests(val) {

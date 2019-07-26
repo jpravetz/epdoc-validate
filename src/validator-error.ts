@@ -8,7 +8,8 @@ export class ValidatorError {
   /**
    *
    * @param key - name of attribute that caused the error
-   * @param type - error type (eg. invalid, min, missing, max)
+   * @param type - error type (eg. invalid, min, missing, max). This is NOT the
+   * type of the property (eg. integer)
    * @param params - params to pass to translation string
    */
   constructor(key: string, type: string, params: GenericObject = {}) {
@@ -24,9 +25,5 @@ export class ValidatorError {
   toString() {
     let tr = 'validator.error.' + this.type;
     return new Translator(tr).params(this).trIfExists();
-  }
-
-  toJSON() {
-    return pick(this, 'key', 'type', 'reason');
   }
 }

@@ -39,11 +39,7 @@ describe('input', () => {
         .name('b')
         .validate(RULE);
       expect(validator.errors.length).toBe(1);
-      expect(validator.errors[0]).toEqual({
-        key: 'a',
-        reason: 'invalid',
-        type: 'string'
-      });
+      expect(validator.errors[0]).toEqual({ key: 'a', type: 'invalid' });
       expect(changes.a).toBeUndefined();
       expect(changes.b).toBe(i1);
     });
@@ -63,11 +59,7 @@ describe('input', () => {
         .name('b')
         .validate(RULE);
       expect(validator.errors.length).toBe(1);
-      expect(validator.errors[0]).toEqual({
-        key: 'a',
-        reason: 'invalid',
-        type: 'string'
-      });
+      expect(validator.errors[0]).toEqual({ key: 'a', type: 'invalid' });
       expect(changes.a).toBeUndefined();
       expect(changes.b).toBe(i1);
     });
@@ -90,16 +82,8 @@ describe('input', () => {
         .name('c')
         .validate(RULE);
       expect(validator.errors.length).toBe(2);
-      expect(validator.errors[0]).toEqual({
-        key: 'a',
-        reason: 'invalid',
-        type: 'string'
-      });
-      expect(validator.errors[1]).toEqual({
-        key: 'c',
-        reason: 'invalid',
-        type: 'string'
-      });
+      expect(validator.errors[0]).toEqual({ key: 'a', type: 'invalid' });
+      expect(validator.errors[1]).toEqual({ key: 'c', type: 'invalid' });
       expect(changes.a).toBeUndefined();
       expect(changes.b).toBe(i1);
       expect(changes.c).toBeUndefined();

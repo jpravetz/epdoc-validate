@@ -1,6 +1,6 @@
 import { ValidatorItem } from './validator-item';
-import { GenericObject, Callback, hasValue, isString } from './lib/util';
-import { isFunction } from 'util';
+import { GenericObject, Callback, hasValue, isString, isDate, isArray } from './lib/util';
+import { isFunction, isObject } from 'util';
 
 function asString(val: any): string {
   if (isString(val)) {
@@ -11,6 +11,12 @@ function asString(val: any): string {
   }
   if (!hasValue(val)) {
     return '';
+  }
+  if (isDate(val)) {
+    return val.toISOString();
+  }
+  if (isObject(val) || isArray(val)) {
+    throw new Error('InputValidator does not permit complex values');
   }
   return String(val);
 }
