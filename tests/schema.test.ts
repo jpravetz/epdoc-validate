@@ -1,6 +1,6 @@
 import {
   validSchemaTypes, validateType, deepEquals
-} from '../util';
+} from '../src/lib/util';
 
 describe('schema util', () => {
 

@@ -1,5 +1,5 @@
-import { GenericObject } from '../lib/util';
-import { InputValidator } from '../input-validator';
+import { GenericObject } from '../src/lib/util';
+import { InputValidator } from '../src/input-validator';
 
 describe('input', () => {
   describe('number', () => {

@@ -1,14 +1,14 @@
 # validate
 
-Validation module
+Validation module validates individual values or properties of an object.
 
 ## Features
 
-- Allows defaults to be specified and used if a value has an error
-- Options for strict checking, required and optional properties
+- Allows default values to be specified and used if a value has an error or is missing
+- Options for `strict` checking, with `required` and `optional` properties
 - Recursively handles objects with properties
-- Supports pre-canned validators
-- Supports sanitizing
+- Supports pre-canned validators for url, email, etc
+- Supports a sanitizer callback function
 - Reports on all errors, not stopping at first error
 - Attempts to build output even if errors are encountered
 - Supports comparing values against a reference document (eg. to save only
@@ -147,4 +147,12 @@ To run tests
 
 ```sh
 npm test
+```
+
+To contribute, please install prettier globally and run prettier to format
+files. If using vscode, install the prettier extension, disable other
+formatters, and enable prettier for this project.
+
+```
+npm install -g prettier
 ```

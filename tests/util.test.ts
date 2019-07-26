@@ -2,7 +2,7 @@ import {
   isString, isNonEmptyString, isBoolean, isArray, isInteger, isNumber, isPosNumber,
   isFunction, isRegExp, isObject, isDate, isNull, isDefined, isError, hasValue,
   omit, pick, deepEquals
-} from '../util';
+} from '../src/lib/util';
 
 describe('util basic', () => {
 

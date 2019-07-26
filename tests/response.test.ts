@@ -1,5 +1,5 @@
-import { ResponseValidator } from '../response-validator';
-import { GenericObject, deepCopy } from '../lib/util';
+import { ResponseValidator } from '../src/response-validator';
+import { GenericObject, deepCopy } from '../src/lib/util';
 
 describe('response', () => {
   describe('primitive', () => {
