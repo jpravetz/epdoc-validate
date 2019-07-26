@@ -28,7 +28,7 @@ export class Validator extends ValidatorBase {
     return this;
   }
 
-  validate(rule: GenericObject): this {
+  validate(rule: any): this {
     throw new Error('Implemented by subclass');
     return this;
   }

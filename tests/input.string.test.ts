@@ -24,6 +24,24 @@ describe('input', () => {
       expect(changes.b).toBe(i0);
     });
 
+    it('null', () => {
+      const RULE1 = [{ type: 'string' }];
+      let i0 = null;
+      let i1 = 'a string ';
+      let changes: GenericObject = {};
+      let validator = new InputValidator(changes);
+      validator
+        .input(i0)
+        .name('a')
+        .validate(RULE1);
+      validator
+        .input(i1)
+        .name('b')
+        .validate(RULE1);
+      expect(validator.hasErrors()).toBe(false);
+      expect(changes.a).toBe('');
+      expect(changes.b).toBe(i1.trim());
+    });
     it('email', () => {
       const RULE = { type: 'string', format: 'email' };
       let changes: GenericObject = {};

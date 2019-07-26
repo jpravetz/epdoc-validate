@@ -18,7 +18,7 @@ export class InputValidator extends Validator {
   protected _changes: GenericObject;
   protected _refDoc: GenericObject;
   protected _name: string = undefined;
-  protected _rule: GenericObject = undefined;
+  protected _rule: any = undefined;
 
   constructor(changes: GenericObject = {}) {
     super();
@@ -40,7 +40,7 @@ export class InputValidator extends Validator {
     return this;
   }
 
-  rule(rule: GenericObject): this {
+  rule(rule: any): this {
     if (!this._itemValidator) {
       this._rule = rule;
     } else {
@@ -75,12 +75,23 @@ export class InputValidator extends Validator {
     return this;
   }
 
-  validate(rule?: GenericObject): this {
+  validate(rule?: any): this {
+    if (rule) {
+      this._rule = rule;
+    }
     this.applyChainVariables();
-    this._itemValidator.validate(rule);
-    if (this._itemValidator.hasErrors()) {
-      this.addErrors(this._itemValidator.errors);
-    } else {
+
+    let rules = Array.isArray(this._rule) ? this._rule : [this._rule];
+    this._rule = undefined;
+    let passed = false;
+    for (let idx = 0; idx < rules.length && !passed; ++idx) {
+      let validatorRule = new ValidatorRule(rules[idx]);
+      this._itemValidator.validate(validatorRule);
+      if (!this._itemValidator.hasErrors()) {
+        passed = true;
+      }
+    }
+    if (passed) {
       if (this._refDoc) {
         if (!deepEquals(this._itemValidator.output(), this._refDoc[this._name])) {
           this._changes[this._name] = this._itemValidator.output;
@@ -89,6 +100,8 @@ export class InputValidator extends Validator {
         let name = this._itemValidator.getName();
         this._changes[name] = this._itemValidator.output;
       }
+    } else {
+      this.addErrors(this._itemValidator.errors);
     }
     return this;
   }
@@ -97,10 +110,6 @@ export class InputValidator extends Validator {
     if (this._name) {
       this._itemValidator.name(this._name);
       this._name = undefined;
-    }
-    if (this._rule) {
-      this._itemValidator.rule(this._rule);
-      this._rule = undefined;
     }
     return this;
   }

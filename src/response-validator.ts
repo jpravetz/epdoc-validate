@@ -14,7 +14,7 @@ export class ResponseValidator extends Validator {
     return this;
   }
 
-  validate(rule?: GenericObject): this {
+  validate(rule?: any): this {
     this._itemValidator.validate(rule);
     this.output = this._itemValidator.output;
     if (this._itemValidator.hasErrors()) {

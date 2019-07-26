@@ -45,7 +45,7 @@ let reference = {
   title: 'old title',
   opacity: 0.5
 };
-let validator = new Validator(changes);
+let validator = new InputValidator(changes);
 validator.reference(reference)
 validator.name('title').input('new title').validate(RULES.title);
 validator.name('opacity').input(0.5).validate(RULES.opacity);
@@ -53,9 +53,32 @@ console.log(changes);
 # changes = { title: 'new title' };
 ```
 
+## InputValidator Methods
+
+- `constructor(changes)` -
+- `reference(doc)` - Sets a comparison document.
+- `name(string)` - Sets the property name.
+- `input(value)` - Set the value that is to be validated.
+- `validate(rule|rules)` - a rule or an array of rules. See _Rule Options_ below.
+  - `value` must match the rule or one of the rules in the array. If used, the
+    properties `default`, `strict`, `required` and `optional` should be set in
+    the last entry in the rule array.
+
+## ResponseValidator Methods
+
+- `constructor()`
+- `name(string)` - Sets the property name.
+- `validate(rule|rules)` - a rule or an array of rules.
+  - Rules are generic objects that are then used to create a `ValidatorRule`
+    object.
+  - The value must match the rule or one of the rules in the array. If used, the
+    properties `default`, `strict`, `required` and `optional` should be used in
+    the last entry in the rule array.
+
 ## Rule options
 
-Rules will have the following options:
+Rules are generic objects with the following options. This generic object is
+converted into a `ValidatorRule` object internally within this module.
 
 - `name` string - required for InputValidation, but can be specified via the
   name method
