@@ -6,11 +6,9 @@ import { ValidatorItem } from './validator-item';
 import { isObject, GenericObject, Callback } from './lib/util';
 import { ValidatorBase } from './validator-base';
 
-
 // let logger = LogManager.getLogger('validator');
 
 export class Validator extends ValidatorBase {
-
   protected _errors: ValidatorError[] = [];
   protected _itemValidator: ValidatorItem = undefined;
   _obj: object;
@@ -26,7 +24,7 @@ export class Validator extends ValidatorBase {
   }
 
   input(val: any): this {
-    this._itemValidator.input(val);
+    throw new Error('Implemented by subclass');
     return this;
   }
 
@@ -38,9 +36,11 @@ export class Validator extends ValidatorBase {
   errorString(trParams: GenericObject = {}) {
     if (this.hasErrors) {
       // logger.debug('errorString', this._errors);
-      trParams.msg = this._errors.map(err => {
-        return err.toString();
-      }).join(', ');
+      trParams.msg = this._errors
+        .map(err => {
+          return err.toString();
+        })
+        .join(', ');
       let tr = 'validator.badData';
       return new Translator(tr).params(trParams).tr();
     }
@@ -87,7 +87,4 @@ export class Validator extends ValidatorBase {
   //   item.validate(rules);
   //   return this;
   // }
-
-
 }
-

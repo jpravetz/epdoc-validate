@@ -493,8 +493,8 @@ export class ValidatorItem extends ValidatorBase {
             .validate();
           if (item.hasErrors()) {
             errors.concat(item.errors);
-          } else if (item.value !== undefined) {
-            this._result[prop] = item.value;
+          } else if (item.output !== undefined) {
+            this._result[prop] = item.output;
           }
         } catch (err) {
           errors.push(err);
