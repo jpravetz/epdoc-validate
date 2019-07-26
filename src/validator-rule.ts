@@ -1,6 +1,32 @@
-import { isObject, isNonEmptyString, isString, isNumber, isInteger, isBoolean, pick, GenericObject, schemaTypeValidator, validSchemaTypes, Callback } from './lib/util';
+import {
+  isObject,
+  isNonEmptyString,
+  isString,
+  isNumber,
+  isInteger,
+  isBoolean,
+  pick,
+  GenericObject,
+  schemaTypeValidator,
+  validSchemaTypes,
+  Callback
+} from './lib/util';
 
-const RULE_PARAMS = ['required', 'optional', 'type', 'label', 'format', 'min', 'max', 'default', 'sanitize', 'fromView', 'strict', 'pattern', 'properties'];
+const RULE_PARAMS = [
+  'required',
+  'optional',
+  'type',
+  'label',
+  'format',
+  'min',
+  'max',
+  'default',
+  'sanitize',
+  'fromView',
+  'strict',
+  'pattern',
+  'properties'
+];
 const FORMAT_LIBRARY = {
   email: /^(?:[a-zA-Z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-zA-Z0-9!#$%&'*+/=?^_`{|}~-]+)*|"(?:[\x01-\x08\x0b\x0c\x0e-\x1f\x21\x23-\x5b\x5d-\x7f]|\\[\x01-\x09\x0b\x0c\x0e-\x7f])*")@(?:(?:[a-zA-Z0-9](?:[a-zA-Z0-9-]*[a-zA-Z0-9])?\.)+[a-zA-Z0-9](?:[a-zA-Z0-9-]*[a-zA-Z0-9])?|\[(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?|[a-zA-Z0-9-]*[a-zA-Z0-9]:(?:[\x01-\x08\x0b\x0c\x0e-\x1f\x21-\x5a\x53-\x7f]|\\[\x01-\x09\x0b\x0c\x0e-\x7f])+)\])$/,
   dimension: /^\d[1,4]$/,
@@ -12,7 +38,7 @@ const RULE_LIBRARY = {
   url: { pattern: /^https?:\/\// },
   email: {
     pattern: FORMAT_LIBRARY.email,
-    sanitize: function (v) {
+    sanitize: function(v) {
       return String(v); // v.toLowerCase();
     }
   },
@@ -38,10 +64,9 @@ const RULE_LIBRARY = {
 };
 
 export class ValidatorRule {
-
   name: string;
   label: string;
-  type: any;      // string or array of strings or strings separated by '|'
+  type: any; // string or array of strings or strings separated by '|'
   pattern: any;
   default: any;
   min: number;
@@ -52,7 +77,7 @@ export class ValidatorRule {
   strict: boolean;
   properties: GenericObject;
   arrayType: any; // if an array, the entries must be of this type
-  appendToArray: boolean;   // for arrays
+  appendToArray: boolean; // for arrays
   fromView: Callback; // hook to allow value to be manipulated, eg converting 0/1 to false/true XXX use sanitize instead
 
   /**
@@ -112,7 +137,9 @@ export class ValidatorRule {
       let types = sRule.split('|');
       for (let tdx = 0; tdx < types.length; tdx++) {
         if (schemaTypeValidator(types[tdx]) === undefined) {
-          throw new Error(`Invalid type ${sRule} must be one of ${validSchemaTypes.join(', ')}`);
+          throw new Error(
+            `Invalid type ${sRule} must be one of ${validSchemaTypes.join(', ')}`
+          );
         }
       }
       // TODO
@@ -146,5 +173,4 @@ export class ValidatorRule {
     });
     return this;
   }
-
 }

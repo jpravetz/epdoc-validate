@@ -1,6 +1,20 @@
 import { Validator } from './validator';
 import { ValidatorError } from './validator-error';
-import { isBoolean, isNumber, isObject, isRegExp, isString, isInteger, isFunction, isDate, GenericObject, Callback, hasValue, deepCopy, validateType } from './lib/util';
+import {
+  isBoolean,
+  isNumber,
+  isObject,
+  isRegExp,
+  isString,
+  isInteger,
+  isFunction,
+  isDate,
+  GenericObject,
+  Callback,
+  hasValue,
+  deepCopy,
+  validateType
+} from './lib/util';
 import { ValidatorRule } from './validator-rule';
 import { ValidatorBase } from './validator-base';
 
@@ -27,11 +41,10 @@ const APPLY_METHOD = {
 };
 
 export class ValidatorItem extends ValidatorBase {
-
   protected _value: any;
-  protected _rule: ValidatorRule;
   protected _changes: GenericObject;
   protected _refDoc: GenericObject;
+  protected _rule: ValidatorRule = undefined;
 
   // track errors here for objects with properties, so we collect them all before failing
   protected _name: string;
@@ -42,9 +55,13 @@ export class ValidatorItem extends ValidatorBase {
     this._value = value;
   }
 
-  name(name) {
+  name(name: string): this {
     this._name = name;
     return this;
+  }
+
+  getName(): string {
+    return this._name;
   }
 
   set label(val) {
@@ -84,8 +101,8 @@ export class ValidatorItem extends ValidatorBase {
    */
   rule(rule: GenericObject) {
     this._rule = new ValidatorRule(rule);
-    if (isFunction(rule.fromView)) {
-      this._value = rule.fromView(this._value);
+    if (isFunction(this._rule.fromView)) {
+      this._value = this._rule.fromView(this._value);
     }
     return this;
   }
@@ -98,7 +115,6 @@ export class ValidatorItem extends ValidatorBase {
    * specified using the rule() method.
    */
   validate(rule?: GenericObject) {
-
     // Setup all the variables needed
     this._rule = rule ? new ValidatorRule(rule) : this._rule;
     if (!this._name && this._rule.name) {
@@ -114,12 +130,12 @@ export class ValidatorItem extends ValidatorBase {
     this.valueApply();
 
     // Look at the results and pass them upstream to parent
-    if (this._errors.length) {
-      if (this.parent) {
-        this.parent.addErrors(this._errors);
-        this._errors = [];
-      }
-    }
+    // if (this._errors.length) {
+    //   if (this.parent) {
+    //     this.parent.addErrors(this._errors);
+    //     this._errors = [];
+    //   }
+    // }
     return this;
   }
 
@@ -190,7 +206,6 @@ export class ValidatorItem extends ValidatorBase {
     }
     return this;
   }
-
 
   nullApply(val) {
     if (val === null) {
@@ -359,6 +374,7 @@ export class ValidatorItem extends ValidatorBase {
         }
       }
       this._result = this.applyNumberLimitTests(valAsFloat);
+      return this;
     }
     if (this._rule.default) {
       this._result = this.getDefault();
@@ -471,7 +487,8 @@ export class ValidatorItem extends ValidatorBase {
       Object.keys(this._rule.properties).forEach(prop => {
         try {
           let item = new ValidatorItem(this._value[prop]);
-          item.rule(this._rule.properties[prop])
+          item
+            .rule(this._rule.properties[prop])
             .name(prop)
             .validate();
           if (item.hasErrors()) {
@@ -499,8 +516,7 @@ export class ValidatorItem extends ValidatorBase {
         for (let idx = 0; idx < this._value.length; ++idx) {
           try {
             let item = new ValidatorItem(this._value[idx]);
-            item.rule(this._rule.arrayType)
-              .valueApply();
+            item.rule(this._rule.arrayType).valueApply();
             if (item.hasErrors) {
               this._errors.concat(item.errors);
             } else {
@@ -517,14 +533,12 @@ export class ValidatorItem extends ValidatorBase {
     return this;
   }
 
-
   fnOrVal(fn, ...args) {
     if (isFunction(fn)) {
       return fn(...args);
     }
     return fn;
   }
-
 
   getDefault() {
     if (isFunction(this._rule.default)) {
@@ -536,7 +550,4 @@ export class ValidatorItem extends ValidatorBase {
   // applyObjectProperties(val) {
 
   // }
-
 }
-
-

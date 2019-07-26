@@ -1,9 +1,8 @@
-import { ValidatorItemResponse } from "./validator-item-response";
-import { Validator } from "./validator";
-import { GenericObject } from "./lib/util";
+import { ValidatorItemResponse } from './validator-item-response';
+import { Validator } from './validator';
+import { GenericObject } from './lib/util';
 
 export class ResponseValidator extends Validator {
-
   protected _result: any;
 
   constructor() {
@@ -15,7 +14,7 @@ export class ResponseValidator extends Validator {
     return this;
   }
 
-  validate(rule: GenericObject): this {
+  validate(rule?: GenericObject): this {
     this._itemValidator.validate(rule);
     if (this._itemValidator.hasErrors()) {
       this.addErrors(this._itemValidator.errors);
@@ -24,5 +23,4 @@ export class ResponseValidator extends Validator {
     }
     return this;
   }
-
 }

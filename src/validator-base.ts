@@ -1,10 +1,11 @@
-import { ValidatorError } from "./validator-error";
+import { ValidatorError } from './validator-error';
+import { ValidatorRule } from './validator-rule';
+import { GenericObject } from './lib/util';
 
 export class ValidatorBase {
-
   protected _parent: ValidatorBase;
-  protected _errors: ValidatorError[] = [];
   protected _result: any = undefined;
+  protected _errors: ValidatorError[] = [];
 
   constructor(parent?: ValidatorBase) {
     this._parent = parent;
@@ -13,6 +14,7 @@ export class ValidatorBase {
   clear() {
     this._errors = [];
     this._result = undefined;
+    this._rule = undefined;
     return this;
   }
 
@@ -45,12 +47,16 @@ export class ValidatorBase {
   }
 
   addError(err): this {
-    throw new Error(`Errors array not defined for ${this.constructor.name}`);
+    this._errors.push(err);
     return this;
   }
 
   addErrors(errs: ValidatorError[]): this {
-    throw new Error(`Errors array not defined for ${this.constructor.name}`);
+    this._errors = this._errors.concat(errs);
     return this;
+  }
+
+  validate(rule?: GenericObject): this {
+    throw new Error('Implemented by subclass');
   }
 }
