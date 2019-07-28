@@ -7,7 +7,7 @@ import {
   isString,
   isFunction,
   isDate,
-  GenericObject,
+  IGenericObject,
   hasValue,
   deepCopy
 } from './lib/util';
@@ -40,8 +40,8 @@ const APPLY_METHOD: { [key: string]: string } = {
 
 export class ValidatorItem extends ValidatorBase {
   protected _value: any;
-  protected _changes?: GenericObject;
-  protected _refDoc?: GenericObject;
+  protected _changes?: IGenericObject;
+  protected _refDoc?: IGenericObject;
   protected _rule?: ValidatorRule;
 
   // track errors here for objects with properties, so we collect them all before failing
@@ -85,11 +85,11 @@ export class ValidatorItem extends ValidatorBase {
     return hasValue(this._value);
   }
 
-  set changes(val: GenericObject) {
+  set changes(val: IGenericObject) {
     this._changes = val;
   }
 
-  set refDoc(val: GenericObject) {
+  set refDoc(val: IGenericObject) {
     this._refDoc = val;
   }
 
@@ -248,7 +248,7 @@ export class ValidatorItem extends ValidatorBase {
     return this;
   }
 
-  private applyStringLengthTests(val: any, rule: ValidatorRule) {
+  protected applyStringLengthTests(val: any, rule: ValidatorRule) {
     if (isRegExp(rule.pattern)) {
       if (!rule.pattern.test(val)) {
         throw new ValidatorError(this.label as string, 'invalid');
@@ -285,7 +285,7 @@ export class ValidatorItem extends ValidatorBase {
    * @param {*} val
    */
   protected numberApply(val: any, rule: ValidatorRule): ValidatorItem {
-    let isInt: boolean = REGEX.integer.test(rule.type);
+    const isInt: boolean = REGEX.integer.test(rule.type);
     if (isNumber(val)) {
       if (isInt) {
         if (isFunction(rule.sanitize)) {
@@ -310,7 +310,7 @@ export class ValidatorItem extends ValidatorBase {
     }
     if (isString(val)) {
       if (isInt) {
-        let valAsInt: any = Math.round(parseFloat(val));
+        const valAsInt: any = Math.round(parseFloat(val));
         if (isNaN(valAsInt)) {
           if (rule.default) {
             return this.setResult(this.getDefault(rule));
@@ -321,7 +321,7 @@ export class ValidatorItem extends ValidatorBase {
         }
         return this.applyNumberLimitTests(valAsInt, rule);
       }
-      let valAsFloat: any = parseFloat(val);
+      const valAsFloat: any = parseFloat(val);
       if (isNaN(valAsFloat)) {
         if (rule.default) {
           return this.setResult(this.getDefault(rule));
@@ -340,28 +340,6 @@ export class ValidatorItem extends ValidatorBase {
       throw new ValidatorError(this.label as string, 'missing or invalid');
     }
     return this;
-  }
-
-  private applyNumberLimitTests(val: any, rule: ValidatorRule) {
-    if (isNumber(rule.min) && val < (rule.min as number)) {
-      if (isNumber(rule.default)) {
-        return this.setResult(rule.default);
-      }
-      if (isFunction(rule.default)) {
-        return this.setResult(rule.default(val, rule, 'min'));
-      }
-      throw new ValidatorError(this._label as string, 'min', { min: rule.min });
-    }
-    if (isNumber(rule.max) && val > (rule.max as number)) {
-      if (isNumber(rule.default)) {
-        return this.setResult(rule.default);
-      }
-      if (isFunction(rule.default)) {
-        return this.setResult(rule.default(val, rule, 'max'));
-      }
-      throw new ValidatorError(this._label as string, 'max', { max: rule.max });
-    }
-    return this.setResult(val);
   }
 
   protected dateApply(val: any, rule: ValidatorRule) {
@@ -397,7 +375,7 @@ export class ValidatorItem extends ValidatorBase {
     throw new ValidatorError(this.label as string, 'invalid');
   }
 
-  private applyDateLimitTests(val: any, rule: ValidatorRule) {
+  protected applyDateLimitTests(val: any, rule: ValidatorRule) {
     if (hasValue(rule.min) && val < (rule.min as number)) {
       if (isFunction(rule.default)) {
         return this.setResult(rule.default(val, rule, 'min'));
@@ -449,7 +427,7 @@ export class ValidatorItem extends ValidatorBase {
       Object.keys(rule.properties).forEach(prop => {
         try {
           let item = new ValidatorItem(this._value[prop]);
-          item.name(prop).validate((rule.properties as GenericObject)[prop]);
+          item.name(prop).validate((rule.properties as IGenericObject)[prop]);
           if (item.hasErrors()) {
             errors = errors.concat(item.errors);
           } else if (item.output !== undefined) {
@@ -472,9 +450,9 @@ export class ValidatorItem extends ValidatorBase {
       this._result = [];
       if (rule.arrayType) {
         this._result = [];
-        for (let idx = 0; idx < this._value.length; ++idx) {
+        for (const v of this._value) {
           try {
-            let item = new ValidatorItem(this._value[idx]);
+            let item = new ValidatorItem(v);
             item.valueApply(rule.arrayType);
             if (item.hasErrors) {
               this._errors.concat(item.errors);

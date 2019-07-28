@@ -9,7 +9,9 @@ const REGEX = {
   instr: /^\[([^\]]+)\](.*)$/
 };
 
-export type GenericObject = { [key: string]: any };
+export interface IGenericObject {
+  [key: string]: any;
+}
 export type Callback = (val: any) => any;
 
 export function isNumber(val: any) {
@@ -42,7 +44,7 @@ export function isNonEmptyString(val: any, path?: string) {
 }
 
 export function isString(val: any, path?: string) {
-  let s = path ? getPropertyValue(val, path) : val;
+  const s = path ? getPropertyValue(val, path) : val;
   return typeof s === 'string';
 }
 
@@ -67,11 +69,11 @@ export function isDefined(val: any) {
 }
 
 export function isNonEmptyArray(val: any, path?: string) {
-  let a = path ? getPropertyValue(val, path) : val;
+  const a = path ? getPropertyValue(val, path) : val;
   return Array.isArray(a) && a.length;
 }
 
-export function isEmpty(obj: GenericObject) {
+export function isEmpty(obj: IGenericObject) {
   return Object.keys(obj).length === 0 && obj.constructor === Object;
 }
 
@@ -89,7 +91,7 @@ export function isArray(val: any) {
 
 export function asError(...args: any[]): Error {
   let err: Error | undefined;
-  let msg: string[] = [];
+  const msg: string[] = [];
   if (args.length) {
     args.forEach(arg => {
       if (arg instanceof Error) {
@@ -118,7 +120,7 @@ export function asError(...args: any[]): Error {
  * @returns {boolean}
  */
 export function isObject(obj: any, path?: string) {
-  let val = path ? getPropertyValue(obj, path) : obj;
+  const val = path ? getPropertyValue(obj, path) : obj;
   return (
     val !== null &&
     typeof val === 'object' &&
@@ -150,9 +152,9 @@ export function isEventAggregator(ea: any) {
   return isObject(ea) && isObject(ea.eventLookup) && Array.isArray(ea.messageHandlers);
 }
 
-export function pick(obj: GenericObject, ...args: any[]) {
+export function pick(obj: IGenericObject, ...args: any[]) {
   // eslint-disable-line no-extend-native
-  let result: GenericObject = {};
+  const result: IGenericObject = {};
   if (Array.isArray(args[0])) {
     args = args[0];
   }
@@ -164,19 +166,19 @@ export function pick(obj: GenericObject, ...args: any[]) {
   return result;
 }
 
-export function omit(obj: GenericObject, ...args: any[]) {
+export function omit(obj: IGenericObject, ...args: any[]) {
   if (Array.isArray(args[0])) {
     args = args[0];
   }
-  let keys = Object.keys(obj).filter(key => args.indexOf(key) < 0);
-  let newObj: GenericObject = {};
+  const keys = Object.keys(obj).filter(key => args.indexOf(key) < 0);
+  const newObj: IGenericObject = {};
   keys.forEach(k => {
     newObj[k] = obj[k];
   });
   return newObj;
 }
 
-export function validatePropertyType(obj: GenericObject, name: string, type: any) {
+export function validatePropertyType(obj: IGenericObject, name: string, type: any) {
   if (obj) {
     return validateType(obj[name], type);
   }
@@ -211,9 +213,8 @@ export function validateType(val: any, type: string | string[]) {
   if (isString(type)) {
     types = (type as string).split('|');
   }
-  for (let tdx = 0; tdx < types.length; tdx++) {
-    let t = types[tdx];
-    let fn = VAL_MAP[t];
+  for (const t of types) {
+    const fn = VAL_MAP[t];
     if (fn && fn(val)) {
       return true;
     }
@@ -222,11 +223,11 @@ export function validateType(val: any, type: string | string[]) {
 }
 
 export function validateProperty(
-  obj: GenericObject,
+  obj: IGenericObject,
   name: string,
   type: string | string[],
   required: boolean
-): GenericObject | undefined {
+): IGenericObject | undefined {
   if (!obj[name] && required) {
     return { type: 'missing', key: name };
   } else if (obj[name] && !validateType(obj[name], type)) {
@@ -283,7 +284,7 @@ export function asInteger(val: any) {
  */
 export function pad(n: number, width: number, z: string) {
   z = z || '0';
-  let sn = String(n);
+  const sn = String(n);
   return sn.length >= width ? sn : new Array(width - sn.length + 1).join(z) + sn;
 }
 
@@ -294,7 +295,7 @@ export function pad(n: number, width: number, z: string) {
  * @return {number} num rounded
  */
 export function roundNumber(num: number, dec: number = 3): number {
-  let factor = Math.pow(10, dec);
+  const factor = Math.pow(10, dec);
   return Math.round(num * factor) / factor;
 }
 
@@ -306,14 +307,14 @@ export function roundNumber(num: number, dec: number = 3): number {
  * @param [opts.src] {String}
  * @returns {*} the value
  */
-export function getPropertyValue(object: GenericObject, ...rest: any[]) {
+export function getPropertyValue(object: IGenericObject, ...rest: any[]) {
   let a: string[] = [];
   let opts: any = {};
   rest.forEach(arg => {
     if (isString(arg)) {
       arg = arg.replace(/\[(\w+)\]/g, '.$1'); // convert indexes to properties
       arg = arg.replace(/^\./, ''); // strip a leading dot
-      let args = arg.split('.');
+      const args = arg.split('.');
       a = [...a, ...args];
     } else if (Array.isArray(arg)) {
       a = [...a, ...arg];
@@ -323,7 +324,7 @@ export function getPropertyValue(object: GenericObject, ...rest: any[]) {
   });
   let obj = object;
   for (let i = 0, n = a.length; i < n; ++i) {
-    let k = a[i];
+    const k = a[i];
     if (obj && k in obj) {
       obj = obj[k];
     } else {
@@ -339,7 +340,7 @@ export function getPropertyValue(object: GenericObject, ...rest: any[]) {
 }
 
 export function setPropertyValue(
-  object: GenericObject,
+  object: IGenericObject,
   prop: string | string[],
   value: any,
   opts = {}
@@ -348,15 +349,15 @@ export function setPropertyValue(
   if (isString(prop)) {
     prop = (prop as string).replace(/\[(\w+)\]/g, '.$1'); // convert indexes to properties
     prop = (prop as string).replace(/^\./, ''); // strip a leading dot
-    let args = (prop as string).split('.');
+    const args = (prop as string).split('.');
     a = [...a, ...args];
   } else if (Array.isArray(prop)) {
     a = [...a, ...prop];
   }
   let obj = object;
-  let n = a.length;
+  const n = a.length;
   for (let i = 0; i < n; ++i) {
-    let k = a[i];
+    const k = a[i];
     if (obj) {
       if (!(k in obj)) {
         obj[k] = {};
@@ -375,13 +376,13 @@ export function deepCopy(a: any) {
   } else if (a instanceof Date || a instanceof RegExp) {
     return a;
   } else if (Array.isArray(a)) {
-    let result = [];
-    for (let adx = 0; adx < a.length; adx++) {
-      result.push(a[adx]);
+    const result = [];
+    for (const b of a) {
+      result.push(b);
     }
     return result;
   } else if (isObject(a)) {
-    let result2: GenericObject = {};
+    const result2: IGenericObject = {};
     Object.keys(a).forEach(key => {
       result2[key] = deepCopy(a[key]);
     });
@@ -397,8 +398,8 @@ export function deepCopy(a: any) {
  * @returns {boolean}
  */
 export function deepEquals(a: any, b: any): boolean {
-  let aSet = isSet(a);
-  let bSet = isSet(b);
+  const aSet = isSet(a);
+  const bSet = isSet(b);
   if (!aSet && !bSet) {
     return true;
   }
@@ -423,8 +424,8 @@ export function deepEquals(a: any, b: any): boolean {
     return false;
   }
   // recursive object equality check
-  let ka = Object.keys(a);
-  let kb = Object.keys(b);
+  const ka = Object.keys(a);
+  const kb = Object.keys(b);
   if (kb.length === ka.length) {
     return ka.every(k => {
       return deepEquals(a[k], b[k]);
@@ -452,10 +453,10 @@ export function isSet(a: any): boolean {
 // Add toJSON method to Error object
 if (!('toJSON' in Error.prototype)) {
   Object.defineProperty(Error.prototype, 'toJSON', {
-    value: function() {
-      let alt: GenericObject = {};
-      let self = this;
-      Object.getOwnPropertyNames(self).forEach(function(key: string) {
+    value: () => {
+      const alt: IGenericObject = {};
+      const self = this;
+      Object.getOwnPropertyNames(self).forEach((key: string) => {
         alt[key] = self[key];
       }, self);
 

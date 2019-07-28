@@ -14,6 +14,7 @@
     "test": "jest --runInBand",
     "coverage": "jest --coverage --runInBand --verbose",
     "prepublish": "tsc",
+    "prepare": "npm run build",
     "format": "prettier --write 'src/**/*.ts'",
     "lint": "tslint -p tsconfig.json"
   },

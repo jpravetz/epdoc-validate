@@ -1,5 +1,5 @@
 import { ValidatorError } from './validator-error';
-import { GenericObject } from './lib/util';
+import { IGenericObject } from './lib/util';
 
 export class ValidatorBase {
   protected _parent?: ValidatorBase;
@@ -10,7 +10,7 @@ export class ValidatorBase {
     this._parent = parent;
   }
 
-  clear() {
+  public clear() {
     this._errors = [];
     this._result = undefined;
     return this;
@@ -36,21 +36,21 @@ export class ValidatorBase {
     return this._errors;
   }
 
-  hasErrors(): boolean {
+  public hasErrors(): boolean {
     return this._errors.length ? true : false;
   }
 
-  addError(err: ValidatorError): this {
+  public addError(err: ValidatorError): this {
     this._errors.push(err);
     return this;
   }
 
-  addErrors(errs: ValidatorError[]): this {
+  public addErrors(errs: ValidatorError[]): this {
     this._errors = this._errors.concat(errs);
     return this;
   }
 
-  validate(rule?: GenericObject): this {
+  public validate(rule: IGenericObject): this {
     throw new Error('Implemented by subclass');
   }
 }

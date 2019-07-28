@@ -1,4 +1,4 @@
-import { GenericObject, Callback, deepEquals } from './lib/util';
+import { IGenericObject, Callback, deepEquals } from './lib/util';
 import { Validator } from './validator';
 import { ValidatorItemInput } from './validator-item-input';
 import { ValidatorRule, ValidatorRuleParams } from './validator-rule';
@@ -15,24 +15,24 @@ import { ValidatorItem } from './validator-item';
  * they are only added if there is a diff to the reference doc.
  */
 export class InputValidator extends Validator {
-  protected _changes: GenericObject;
-  protected _refDoc?: GenericObject;
+  protected _changes: IGenericObject;
+  protected _refDoc?: IGenericObject;
   protected _name?: string;
   protected _rule?: ValidatorRuleParams;
 
-  constructor(changes: GenericObject = {}) {
+  constructor(changes: IGenericObject = {}) {
     super();
     this._changes = changes;
   }
 
-  clear() {
+  public clear() {
     this._changes = {};
     this._refDoc = undefined;
     this._name = undefined;
     return super.clear();
   }
 
-  name(name: string): this {
+  public name(name: string): this {
     if (!this._itemValidator) {
       this._name = name;
     } else {
@@ -46,38 +46,38 @@ export class InputValidator extends Validator {
    * on changes if it is different from the reference's value
    * @param {BaseModel} doc
    */
-  reference(ref: GenericObject | undefined): this {
+  public reference(ref: IGenericObject | undefined): this {
     this._refDoc = ref;
     return this;
   }
 
-  get ref(): GenericObject | undefined {
-    return this._refDoc as GenericObject;
+  get ref(): IGenericObject | undefined {
+    return this._refDoc as IGenericObject;
   }
 
-  get changes(): GenericObject {
+  get changes(): IGenericObject {
     return this._changes;
   }
 
-  input(val: any, fnFromData?: Callback): this {
+  public input(val: any, fnFromData?: Callback): this {
     this._itemValidator = new ValidatorItemInput(val, fnFromData);
     this.applyChainVariables();
     this._itemValidator.changes = this._changes;
-    this._itemValidator.refDoc = this._refDoc;
+    this._itemValidator.refDoc = this._refDoc as IGenericObject;
     return this;
   }
 
-  validate(rule?: any): this {
+  public validate(rule?: any): this {
     if (rule) {
       this._rule = rule;
     }
     this.applyChainVariables();
 
-    let rules = Array.isArray(this._rule) ? this._rule : [this._rule];
+    const rules = Array.isArray(this._rule) ? this._rule : [this._rule];
     this._rule = undefined;
     let passed = false;
     for (let idx = 0; idx < rules.length && !passed; ++idx) {
-      let validatorRule = new ValidatorRule(rules[idx]);
+      const validatorRule = new ValidatorRule(rules[idx]);
       (this._itemValidator as ValidatorItem).validate(validatorRule);
       if (!(this._itemValidator as ValidatorItem).hasErrors()) {
         passed = true;
@@ -88,15 +88,15 @@ export class InputValidator extends Validator {
         if (
           !deepEquals(
             (this._itemValidator as ValidatorItem).output,
-            (this._refDoc as GenericObject)[this._name as string]
+            (this._refDoc as IGenericObject)[this._name as string]
           )
         ) {
-          (this._changes as GenericObject)[this._name as string] = (this
+          (this._changes as IGenericObject)[this._name as string] = (this
             ._itemValidator as ValidatorItem).output;
         }
       } else {
-        let name: string = (this._itemValidator as ValidatorItem).getName();
-        (this._changes as GenericObject)[name] = (this
+        const name: string = (this._itemValidator as ValidatorItem).getName();
+        (this._changes as IGenericObject)[name] = (this
           ._itemValidator as ValidatorItem).output;
       }
     } else {

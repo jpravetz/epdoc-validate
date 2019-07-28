@@ -1,5 +1,5 @@
 import { Translator } from './lib/translator';
-import { GenericObject } from './lib/util';
+import { IGenericObject } from './lib/util';
 
 export class ValidatorError {
   public key: string;
@@ -12,7 +12,7 @@ export class ValidatorError {
    * type of the property (eg. integer)
    * @param params - params to pass to translation string
    */
-  constructor(key: string, type: string, params: GenericObject = {}) {
+  constructor(key: string, type: string, params: IGenericObject = {}) {
     this.key = key;
     this.type = type;
     Object.assign(this, params);
@@ -22,8 +22,8 @@ export class ValidatorError {
     return this.toString();
   }
 
-  toString() {
-    let tr = 'validator.error.' + this.type;
+  public toString() {
+    const tr = 'validator.error.' + this.type;
     return new Translator(tr).params(this).trIfExists();
   }
 }

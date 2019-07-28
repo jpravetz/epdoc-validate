@@ -1,18 +1,18 @@
-import { GenericObject } from './util';
+import { IGenericObject } from './util';
 let i18n;
 
 export class Translator {
   i18n: any;
   private _path: string;
-  private _params: GenericObject;
+  private _params: IGenericObject;
 
-  constructor(path: string, params: GenericObject = {}) {
+  constructor(path: string, params: IGenericObject = {}) {
     this.i18n = i18n;
     this._path = path;
     this._params = params;
   }
 
-  static configure(obj: GenericObject) {
+  static configure(obj: IGenericObject) {
     i18n = obj ? obj.i18n : undefined;
   }
 

@@ -39,7 +39,7 @@ export class ValidatorItemInput extends ValidatorItem {
     super(value);
   }
 
-  hasValue(): boolean {
+  public hasValue(): boolean {
     return this._value && this._value.length > 0;
   }
 }

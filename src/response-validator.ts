@@ -1,6 +1,7 @@
 import { ValidatorItemResponse } from './validator-item-response';
 import { Validator } from './validator';
-import { GenericObject } from './lib/util';
+import { ValidatorRule } from './validator-rule';
+import { ValidatorItem } from './validator-item';
 
 export class ResponseValidator extends Validator {
   protected _result: any;
@@ -9,16 +10,17 @@ export class ResponseValidator extends Validator {
     super();
   }
 
-  input(response: any): this {
+  public input(response: any): this {
     this._itemValidator = new ValidatorItemResponse(response, this);
     return this;
   }
 
-  validate(rule?: any): this {
-    this._itemValidator.validate(rule);
-    this.output = this._itemValidator.output;
-    if (this._itemValidator.hasErrors()) {
-      this.addErrors(this._itemValidator.errors);
+  public validate(rule: ValidatorRule): this {
+    const itemValidator = this._itemValidator as ValidatorItem;
+    itemValidator.validate(rule);
+    this.output = itemValidator.output;
+    if (itemValidator.hasErrors()) {
+      this.addErrors(itemValidator.errors);
     }
     return this;
   }
