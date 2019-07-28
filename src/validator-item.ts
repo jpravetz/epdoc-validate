@@ -1,4 +1,3 @@
-import { Validator } from './validator';
 import { ValidatorError } from './validator-error';
 import {
   isBoolean,
@@ -6,15 +5,13 @@ import {
   isObject,
   isRegExp,
   isString,
-  isInteger,
   isFunction,
   isDate,
   GenericObject,
-  Callback,
   hasValue,
-  deepCopy,
-  validateType
+  deepCopy
 } from './lib/util';
+
 import { ValidatorRule } from './validator-rule';
 import { ValidatorBase } from './validator-base';
 
@@ -28,7 +25,7 @@ const REGEX = {
   isFalse: /^false$/i,
   isWholeNumber: /^[0-9]+$/
 };
-const APPLY_METHOD = {
+const APPLY_METHOD: { [key: string]: string } = {
   string: 'stringApply',
   boolean: 'booleanApply',
   int: 'numberApply',
@@ -43,13 +40,13 @@ const APPLY_METHOD = {
 
 export class ValidatorItem extends ValidatorBase {
   protected _value: any;
-  protected _changes: GenericObject;
-  protected _refDoc: GenericObject;
-  protected _rule: ValidatorRule = undefined;
+  protected _changes?: GenericObject;
+  protected _refDoc?: GenericObject;
+  protected _rule?: ValidatorRule;
 
   // track errors here for objects with properties, so we collect them all before failing
-  protected _name: string;
-  protected _label: string;
+  protected _name?: string;
+  protected _label?: string;
 
   constructor(value: any, parent?: ValidatorBase) {
     super(parent);
@@ -61,7 +58,7 @@ export class ValidatorItem extends ValidatorBase {
     return this;
   }
 
-  public getName(): string {
+  public getName(): string | undefined {
     return this._name;
   }
 
@@ -88,11 +85,11 @@ export class ValidatorItem extends ValidatorBase {
     return hasValue(this._value);
   }
 
-  set changes(val) {
+  set changes(val: GenericObject) {
     this._changes = val;
   }
 
-  set refDoc(val) {
+  set refDoc(val: GenericObject) {
     this._refDoc = val;
   }
 
@@ -125,21 +122,23 @@ export class ValidatorItem extends ValidatorBase {
         this._result = rule.default;
         return this;
       } else if (rule.required) {
-        this._errors.push(new ValidatorError(this._label, 'missing'));
+        this._errors.push(new ValidatorError(this._label as string, 'missing'));
         return this;
       }
     } else if (rule.strict && !rule.optional && !rule.required) {
-      this._errors.push(new ValidatorError(this._label, 'notAllowed'));
+      this._errors.push(new ValidatorError(this._label as string, 'notAllowed'));
       return this;
     }
 
     // Now call a type-specific validator on the value
-    let methodName = APPLY_METHOD[rule.type];
+    let methodName: string = APPLY_METHOD[rule.type];
+    // @ts-ignore
     if (!methodName || !isFunction(this[methodName])) {
       // This is an error in the rule (not the value) so throw an exception
       throw new Error(`Invalid rule type '${rule.type}'`);
     }
     try {
+      // @ts-ignore
       this[methodName](this._value, rule);
     } catch (err) {
       this._errors.push(err);
@@ -157,7 +156,7 @@ export class ValidatorItem extends ValidatorBase {
     return this;
   }
 
-  protected nullApply(val, rule) {
+  protected nullApply(val: any, rule: ValidatorRule) {
     if (val === null) {
       return this.setResult(val);
     }
@@ -171,7 +170,7 @@ export class ValidatorItem extends ValidatorBase {
       return this.setResult(rule.default(val, rule));
     }
     if (rule.required) {
-      throw new ValidatorError(this.label, 'missing or invalid');
+      throw new ValidatorError(this.label as string, 'missing or invalid');
     }
     return this;
   }
@@ -215,9 +214,9 @@ export class ValidatorItem extends ValidatorBase {
       return this.setResult(rule.default(val, rule));
     }
     if (rule.required && val) {
-      throw new ValidatorError(this.label, 'missing');
+      throw new ValidatorError(this.label as string, 'missing');
     }
-    throw new ValidatorError(this.label, 'invalid');
+    throw new ValidatorError(this.label as string, 'invalid');
   }
 
   /**
@@ -244,7 +243,7 @@ export class ValidatorItem extends ValidatorBase {
       return this.applyStringLengthTests(String(val), rule);
     }
     if (rule.required) {
-      throw new ValidatorError(this.label, 'missing');
+      throw new ValidatorError(this.label as string, 'missing');
     }
     return this;
   }
@@ -252,31 +251,31 @@ export class ValidatorItem extends ValidatorBase {
   private applyStringLengthTests(val: any, rule: ValidatorRule) {
     if (isRegExp(rule.pattern)) {
       if (!rule.pattern.test(val)) {
-        throw new ValidatorError(this.label, 'invalid');
+        throw new ValidatorError(this.label as string, 'invalid');
       }
     }
     if (isFunction(rule.pattern)) {
       if (!rule.pattern(val, rule)) {
-        throw new ValidatorError(this.label, 'invalid');
+        throw new ValidatorError(this.label as string, 'invalid');
       }
     }
-    if (isNumber(rule.min) && val.length < rule.min) {
+    if (isNumber(rule.min) && val.length < (rule.min as number)) {
       if (isString(rule.default)) {
         return this.setResult(rule.default);
       }
       if (isFunction(rule.default)) {
         return this.setResult(rule.default(val, rule, 'min'));
       }
-      throw new ValidatorError(this._label, 'lenMin', { min: rule.min });
+      throw new ValidatorError(this.label as string, 'lenMin', { min: rule.min });
     }
-    if (isNumber(rule.max) && val.length > rule.max) {
+    if (isNumber(rule.max) && val.length > (rule.max as number)) {
       if (isString(rule.default)) {
         return this.setResult(rule.default);
       }
       if (isFunction(rule.default)) {
         return this.setResult(rule.default(val, rule, 'max'));
       }
-      throw new ValidatorError(this._label, 'lenMax', { max: rule.max });
+      throw new ValidatorError(this.label as string, 'lenMax', { max: rule.max });
     }
     return this.setResult(val);
   }
@@ -297,12 +296,14 @@ export class ValidatorItem extends ValidatorBase {
           val = Math.round(val);
           return this.applyNumberLimitTests(val, rule);
         }
+        // @ts-ignore
         if (isString(rule.sanitize) && isFunction(Math[rule.sanitize])) {
+          // @ts-ignore
           val = Math[rule.sanitize](val);
           return this.applyNumberLimitTests(val, rule);
         }
         if (Math.round(val) !== val) {
-          throw new ValidatorError(this.label, 'invalid');
+          throw new ValidatorError(this.label as string, 'invalid');
         }
       }
       return this.applyNumberLimitTests(val, rule);
@@ -315,7 +316,7 @@ export class ValidatorItem extends ValidatorBase {
             return this.setResult(this.getDefault(rule));
           }
           if (rule.required) {
-            throw new ValidatorError(this.label, 'missing or invalid');
+            throw new ValidatorError(this.label as string, 'missing or invalid');
           }
         }
         return this.applyNumberLimitTests(valAsInt, rule);
@@ -327,7 +328,7 @@ export class ValidatorItem extends ValidatorBase {
           return this;
         }
         if (rule.required) {
-          throw new ValidatorError(this.label, 'missing or invalid');
+          throw new ValidatorError(this.label as string, 'missing or invalid');
         }
       }
       return this.applyNumberLimitTests(valAsFloat, rule);
@@ -336,29 +337,29 @@ export class ValidatorItem extends ValidatorBase {
       return this.setResult(this.getDefault(rule));
     }
     if (rule.required) {
-      throw new ValidatorError(this.label, 'missing or invalid');
+      throw new ValidatorError(this.label as string, 'missing or invalid');
     }
     return this;
   }
 
   private applyNumberLimitTests(val: any, rule: ValidatorRule) {
-    if (isNumber(rule.min) && val < rule.min) {
+    if (isNumber(rule.min) && val < (rule.min as number)) {
       if (isNumber(rule.default)) {
         return this.setResult(rule.default);
       }
       if (isFunction(rule.default)) {
         return this.setResult(rule.default(val, rule, 'min'));
       }
-      throw new ValidatorError(this._label, 'min', { min: rule.min });
+      throw new ValidatorError(this._label as string, 'min', { min: rule.min });
     }
-    if (isNumber(rule.max) && val > rule.max) {
+    if (isNumber(rule.max) && val > (rule.max as number)) {
       if (isNumber(rule.default)) {
         return this.setResult(rule.default);
       }
       if (isFunction(rule.default)) {
         return this.setResult(rule.default(val, rule, 'max'));
       }
-      throw new ValidatorError(this._label, 'max', { max: rule.max });
+      throw new ValidatorError(this._label as string, 'max', { max: rule.max });
     }
     return this.setResult(val);
   }
@@ -391,29 +392,29 @@ export class ValidatorItem extends ValidatorBase {
       return new Date(rule.default);
     }
     if (rule.required) {
-      throw new ValidatorError(this.label, 'missing or invalid');
+      throw new ValidatorError(this.label as string, 'missing or invalid');
     }
-    throw new ValidatorError(this.label, 'invalid');
+    throw new ValidatorError(this.label as string, 'invalid');
   }
 
   private applyDateLimitTests(val: any, rule: ValidatorRule) {
-    if (hasValue(rule.min) && val < rule.min) {
+    if (hasValue(rule.min) && val < (rule.min as number)) {
       if (isFunction(rule.default)) {
         return this.setResult(rule.default(val, rule, 'min'));
       }
       if (hasValue(rule.default)) {
         return this.setResult(new Date(rule.default));
       }
-      throw new ValidatorError(this._label, 'dateMin', { min: rule.min });
+      throw new ValidatorError(this._label as string, 'dateMin', { min: rule.min });
     }
-    if (hasValue(rule.max) && val > rule.max) {
+    if (hasValue(rule.max) && val > (rule.max as number)) {
       if (isFunction(rule.default)) {
         return this.setResult(rule.default(val, rule, 'max'));
       }
       if (hasValue(rule.default)) {
         return this.setResult(new Date(rule.default));
       }
-      throw new ValidatorError(this._label, 'dateMax', { max: rule.max });
+      throw new ValidatorError(this._label as string, 'dateMax', { max: rule.max });
     }
     return this.setResult(val);
   }
@@ -428,7 +429,7 @@ export class ValidatorItem extends ValidatorBase {
       if (isFunction(rule.sanitize)) {
         return this.setResult(rule.sanitize(val, rule));
       }
-      throw new ValidatorError(this._label, 'invalid');
+      throw new ValidatorError(this.label as string, 'invalid');
     }
     if (isFunction(rule.default)) {
       return this.setResult(rule.default(val, rule));
@@ -437,18 +438,18 @@ export class ValidatorItem extends ValidatorBase {
       return this.setResult(deepCopy(rule.default));
     }
     if (rule.required) {
-      throw new ValidatorError(this._label, 'missing');
+      throw new ValidatorError(this.label as string, 'missing');
     }
     return this;
   }
 
   protected propertiesApply(rule: ValidatorRule): this {
     if (rule.type === 'object' && rule.properties) {
-      let errors = [];
+      let errors: ValidatorError[] = [];
       Object.keys(rule.properties).forEach(prop => {
         try {
           let item = new ValidatorItem(this._value[prop]);
-          item.name(prop).validate(rule.properties[prop]);
+          item.name(prop).validate((rule.properties as GenericObject)[prop]);
           if (item.hasErrors()) {
             errors = errors.concat(item.errors);
           } else if (item.output !== undefined) {
@@ -497,11 +498,4 @@ export class ValidatorItem extends ValidatorBase {
     }
     return rule.default;
   }
-
-  // protected fnOrVal(fn, ...args) {
-  //   if (isFunction(fn)) {
-  //     return fn(...args);
-  //   }
-  //   return fn;
-  // }
 }

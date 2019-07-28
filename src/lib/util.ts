@@ -12,22 +12,6 @@ const REGEX = {
 export type GenericObject = { [key: string]: any };
 export type Callback = (val: any) => any;
 
-if (!('toJSON' in Error.prototype)) {
-  Object.defineProperty(Error.prototype, 'toJSON', {
-    value: function () {
-      let alt = {};
-
-      Object.getOwnPropertyNames(this).forEach(function (key) {
-        alt[key] = this[key];
-      }, this);
-
-      return alt;
-    },
-    configurable: true,
-    writable: true
-  });
-}
-
 export function isNumber(val: any) {
   return typeof val === 'number' && !isNaN(val);
 }
@@ -103,9 +87,9 @@ export function isArray(val: any) {
   return Array.isArray(val);
 }
 
-export function asError(...args) {
-  let err;
-  let msg = [];
+export function asError(...args: any[]): Error {
+  let err: Error | undefined;
+  let msg: string[] = [];
   if (args.length) {
     args.forEach(arg => {
       if (arg instanceof Error) {
@@ -125,7 +109,7 @@ export function asError(...args) {
       err.message = msg.join(' ');
     }
   }
-  return err;
+  return err as Error;
 }
 
 /**
@@ -135,17 +119,22 @@ export function asError(...args) {
  */
 export function isObject(obj: any, path?: string) {
   let val = path ? getPropertyValue(obj, path) : obj;
-  return val !== null && typeof val === 'object' && !Array.isArray(val) && !(val instanceof Date) && !(val instanceof RegExp);
+  return (
+    val !== null &&
+    typeof val === 'object' &&
+    !Array.isArray(val) &&
+    !(val instanceof Date) &&
+    !(val instanceof RegExp)
+  );
 }
 
 /**
  * Is not undefined or null.
  * @param {*} obj
  */
-export function hasValue(obj) {
+export function hasValue(obj: any) {
   return obj !== null && obj !== undefined;
 }
-
 
 /**
  * Careful using this method on minimized code where the name of the class might be changed
@@ -153,20 +142,21 @@ export function hasValue(obj) {
  * @param name
  * @returns {*|boolean}
  */
-export function isClass(obj, name) {
+export function isClass(obj: any, name: string) {
   return isObject(obj) && obj.constructor.name === name;
 }
 
-export function isEventAggregator(ea) {
+export function isEventAggregator(ea: any) {
   return isObject(ea) && isObject(ea.eventLookup) && Array.isArray(ea.messageHandlers);
 }
 
-export function pick(obj: object, ...args) {   // eslint-disable-line no-extend-native
-  let result = {};
+export function pick(obj: GenericObject, ...args: any[]) {
+  // eslint-disable-line no-extend-native
+  let result: GenericObject = {};
   if (Array.isArray(args[0])) {
     args = args[0];
   }
-  args.forEach((key) => {
+  args.forEach(key => {
     if (obj[key] !== undefined) {
       result[key] = obj[key];
     }
@@ -174,26 +164,26 @@ export function pick(obj: object, ...args) {   // eslint-disable-line no-extend-
   return result;
 }
 
-export function omit(obj, ...args) {
+export function omit(obj: GenericObject, ...args: any[]) {
   if (Array.isArray(args[0])) {
     args = args[0];
   }
-  let keys = Object.keys(obj).filter((key) => args.indexOf(key) < 0);
-  let newObj = {};
+  let keys = Object.keys(obj).filter(key => args.indexOf(key) < 0);
+  let newObj: GenericObject = {};
   keys.forEach(k => {
     newObj[k] = obj[k];
   });
   return newObj;
 }
 
-export function validatePropertyType(obj, name, type) {
+export function validatePropertyType(obj: GenericObject, name: string, type: any) {
   if (obj) {
-    return validateType(obj[name], type)
+    return validateType(obj[name], type);
   }
   return false;
 }
 
-const VAL_MAP = {
+const VAL_MAP: { [key: string]: any } = {
   string: isString,
   number: isNumber,
   boolean: isBoolean,
@@ -203,7 +193,7 @@ const VAL_MAP = {
   date: isDate,
   any: isDefined,
   integer: isInteger
-}
+};
 export function schemaTypeValidator(type: string) {
   return VAL_MAP[type];
 }
@@ -211,15 +201,15 @@ export function schemaTypeValidator(type: string) {
 export let validSchemaTypes: string[] = Object.keys(VAL_MAP);
 
 /**
-* Verify that val is any one of the basic types or executes a RegExp against the val.
-* @param val
-* @param type {String|array of string} - To contain one or more entries from VAL_MAP as a string, array of strings or entries separated by '|'.
-* @returns {boolean} Returns true if val is one of type. If type is a RegExp then tests val against the RegExp.
-*/
-export function validateType(val:any, type:any) {
-  let types = Array.isArray(type) ? type : [];
+ * Verify that val is any one of the basic types or executes a RegExp against the val.
+ * @param val
+ * @param type {String|array of string} - To contain one or more entries from VAL_MAP as a string, array of strings or entries separated by '|'.
+ * @returns {boolean} Returns true if val is one of type. If type is a RegExp then tests val against the RegExp.
+ */
+export function validateType(val: any, type: string | string[]) {
+  let types: string[] = Array.isArray(type) ? type : [];
   if (isString(type)) {
-    types = type.split('|');
+    types = (type as string).split('|');
   }
   for (let tdx = 0; tdx < types.length; tdx++) {
     let t = types[tdx];
@@ -231,7 +221,12 @@ export function validateType(val:any, type:any) {
   return false;
 }
 
-export function validateProperty(obj, name, type, required) {
+export function validateProperty(
+  obj: GenericObject,
+  name: string,
+  type: string | string[],
+  required: boolean
+): GenericObject | undefined {
   if (!obj[name] && required) {
     return { type: 'missing', key: name };
   } else if (obj[name] && !validateType(obj[name], type)) {
@@ -239,49 +234,29 @@ export function validateProperty(obj, name, type, required) {
   }
 }
 
-
-export function validateErrorToString(errors, i18n, trRoot) {
-  if (errors && errors.length) {
-    let msg = errors.map(item => {
-      return i18n.tr(trRoot + '.' + item.type, item);
-    }).join(', ');
-    return msg;
-  }
-}
-
-export function tr(s, i18n) {
-  if (s) {
-    let m = s.match(REGEX.tr);
-    if (m) {
-      return i18n.tr(m[1]);
-    }
-    return s;
-  }
-}
-
-export function isTrue(val) {
+export function isTrue(val: any) {
   if (typeof val === 'number') {
-    return (val > 0) ? true : false;
+    return val > 0 ? true : false;
   } else if (typeof val === 'string') {
-    return (val.length && !REGEX.isFalse.test(val)) ? true : false;
+    return val.length && !REGEX.isFalse.test(val) ? true : false;
   } else if (typeof val === 'boolean') {
     return val;
   }
   return false;
 }
 
-export function isFalse(val) {
+export function isFalse(val: any) {
   if (typeof val === 'number') {
-    return (val === 0) ? true : false;
+    return val === 0 ? true : false;
   } else if (typeof val === 'string') {
-    return (val.length && !REGEX.isTrue.test(val)) ? true : false;
+    return val.length && !REGEX.isTrue.test(val) ? true : false;
   } else if (typeof val === 'boolean') {
     return val;
   }
   return false;
 }
 
-export function asFloat(val) {
+export function asFloat(val: any) {
   if (typeof val === 'number') {
     return val;
   } else if (isNonEmptyString(val)) {
@@ -290,7 +265,7 @@ export function asFloat(val) {
   return 0;
 }
 
-export function asInteger(val) {
+export function asInteger(val: any) {
   if (typeof val === 'number') {
     return Number.isInteger(val) ? val : Math.round(val);
   } else if (isNonEmptyString(val)) {
@@ -299,7 +274,6 @@ export function asInteger(val) {
   return 0;
 }
 
-
 /**
  *
  * @param n {number} number to pad with leading zeros.
@@ -307,10 +281,10 @@ export function asInteger(val) {
  * @param [z='0'] {char} character with which to pad string.
  * @returns {String}
  */
-export function pad(n, width, z) {
+export function pad(n: number, width: number, z: string) {
   z = z || '0';
-  n = String(n);
-  return n.length >= width ? n : new Array(width - n.length + 1).join(z) + n;
+  let sn = String(n);
+  return sn.length >= width ? sn : new Array(width - sn.length + 1).join(z) + sn;
 }
 
 /**
@@ -319,11 +293,10 @@ export function pad(n, width, z) {
  * @param {number} dec - number of digits after decimal
  * @return {number} num rounded
  */
-export function roundNumber(num, dec = 3) {
+export function roundNumber(num: number, dec: number = 3): number {
   let factor = Math.pow(10, dec);
   return Math.round(num * factor) / factor;
 }
-
 
 /**
  * Retrieves the value in the object specified by the key path
@@ -333,13 +306,13 @@ export function roundNumber(num, dec = 3) {
  * @param [opts.src] {String}
  * @returns {*} the value
  */
-export function getPropertyValue(object:object, ...rest) {
-  let a = [];
-  let opts:any = {};
+export function getPropertyValue(object: GenericObject, ...rest: any[]) {
+  let a: string[] = [];
+  let opts: any = {};
   rest.forEach(arg => {
     if (isString(arg)) {
       arg = arg.replace(/\[(\w+)\]/g, '.$1'); // convert indexes to properties
-      arg = arg.replace(/^\./, '');           // strip a leading dot
+      arg = arg.replace(/^\./, ''); // strip a leading dot
       let args = arg.split('.');
       a = [...a, ...args];
     } else if (Array.isArray(arg)) {
@@ -355,7 +328,9 @@ export function getPropertyValue(object:object, ...rest) {
       obj = obj[k];
     } else {
       if (opts.throw) {
-        throw new Error(`Property ${a.join('.')} not found in ${opts.src ? opts.src : 'object'}`);
+        throw new Error(
+          `Property ${a.join('.')} not found in ${opts.src ? opts.src : 'object'}`
+        );
       }
       return;
     }
@@ -363,12 +338,17 @@ export function getPropertyValue(object:object, ...rest) {
   return obj;
 }
 
-export function setPropertyValue(object, prop, value, opts = {}) {
-  let a = [];
+export function setPropertyValue(
+  object: GenericObject,
+  prop: string | string[],
+  value: any,
+  opts = {}
+) {
+  let a: any[] = [];
   if (isString(prop)) {
-    prop = prop.replace(/\[(\w+)\]/g, '.$1'); // convert indexes to properties
-    prop = prop.replace(/^\./, '');           // strip a leading dot
-    let args = prop.split('.');
+    prop = (prop as string).replace(/\[(\w+)\]/g, '.$1'); // convert indexes to properties
+    prop = (prop as string).replace(/^\./, ''); // strip a leading dot
+    let args = (prop as string).split('.');
     a = [...a, ...args];
   } else if (Array.isArray(prop)) {
     a = [...a, ...prop];
@@ -387,7 +367,7 @@ export function setPropertyValue(object, prop, value, opts = {}) {
   obj = value;
 }
 
-export function deepCopy(a) {
+export function deepCopy(a: any) {
   if (a === undefined || a === null) {
     return a;
   } else if (typeof a === 'number' || typeof a === 'string') {
@@ -401,7 +381,7 @@ export function deepCopy(a) {
     }
     return result;
   } else if (isObject(a)) {
-    let result2 = {};
+    let result2: GenericObject = {};
     Object.keys(a).forEach(key => {
       result2[key] = deepCopy(a[key]);
     });
@@ -416,7 +396,7 @@ export function deepCopy(a) {
  * @param b
  * @returns {boolean}
  */
-export function deepEquals(a, b) {
+export function deepEquals(a: any, b: any): boolean {
   let aSet = isSet(a);
   let bSet = isSet(b);
   if (!aSet && !bSet) {
@@ -453,7 +433,7 @@ export function deepEquals(a, b) {
   return false;
 }
 
-export function isSet(a) {
+export function isSet(a: any): boolean {
   if (a === null || a === undefined) {
     return false;
   }
@@ -467,4 +447,21 @@ export function isSet(a) {
     return false;
   }
   return true;
+}
+
+// Add toJSON method to Error object
+if (!('toJSON' in Error.prototype)) {
+  Object.defineProperty(Error.prototype, 'toJSON', {
+    value: function() {
+      let alt: GenericObject = {};
+      let self = this;
+      Object.getOwnPropertyNames(self).forEach(function(key: string) {
+        alt[key] = self[key];
+      }, self);
+
+      return alt;
+    },
+    configurable: true,
+    writable: true
+  });
 }

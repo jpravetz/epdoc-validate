@@ -1,5 +1,5 @@
 import { Translator } from './lib/translator';
-import { GenericObject, pick } from './lib/util';
+import { GenericObject } from './lib/util';
 
 export class ValidatorError {
   public key: string;

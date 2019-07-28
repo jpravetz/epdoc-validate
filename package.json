@@ -2,16 +2,20 @@
   "name": "validate",
   "version": "1.0.0",
   "main": "dist/index.js",
+  "types": "dist/index.d.ts",
   "umd:main": "dist/index.umd.js",
   "module": "dist/index.mjs",
   "source": "src/index.ts",
   "license": "MIT",
   "scripts": {
-    "build": "microbundle",
+    "build": "tsc",
     "dev": "microbundle watch",
     "watch": "jest --watch",
     "test": "jest --runInBand",
-    "coverage": "jest --coverage --runInBand --verbose"
+    "coverage": "jest --coverage --runInBand --verbose",
+    "prepublish": "tsc",
+    "format": "prettier --write 'src/**/*.ts'",
+    "lint": "tslint -p tsconfig.json"
   },
   "jest": {
     "verbose": true
@@ -28,8 +32,12 @@
     "babel-preset-env": "^1.7.0",
     "jest": "^24.8.0",
     "microbundle": "^0.11.0",
+    "prettier": "^1.18.2",
     "ts-jest": "^24.0.2",
     "ts-node": "^8.3.0",
-    "tslint": "^5.18.0"
+    "tslint": "^5.18.0",
+    "tslint-config-prettier": "^1.18.0",
+    "tslint-plugin-prettier": "^2.0.1",
+    "typescript": "^3.5.3"
   }
 }

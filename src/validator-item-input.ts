@@ -1,5 +1,5 @@
 import { ValidatorItem } from './validator-item';
-import { GenericObject, Callback, hasValue, isString, isDate, isArray } from './lib/util';
+import { Callback, hasValue, isString, isDate, isArray } from './lib/util';
 import { isFunction, isObject } from 'util';
 
 function asString(val: any): string {
@@ -32,7 +32,7 @@ export class ValidatorItemInput extends ValidatorItem {
    */
   constructor(value: any, fnFromData?: Callback) {
     if (isFunction(fnFromData)) {
-      value = fnFromData(value);
+      value = (fnFromData as Function)(value);
     } else if (fnFromData === undefined) {
       value = asString(value);
     }

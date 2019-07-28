@@ -1,10 +1,9 @@
 import { ValidatorError } from './validator-error';
-import { ValidatorRule } from './validator-rule';
 import { GenericObject } from './lib/util';
 
 export class ValidatorBase {
-  protected _parent: ValidatorBase;
-  protected _result: any = undefined;
+  protected _parent?: ValidatorBase;
+  protected _result?: any;
   protected _errors: ValidatorError[] = [];
 
   constructor(parent?: ValidatorBase) {
@@ -14,12 +13,7 @@ export class ValidatorBase {
   clear() {
     this._errors = [];
     this._result = undefined;
-    this._rule = undefined;
     return this;
-  }
-
-  get changes() {
-    return undefined;
   }
 
   get ref() {
@@ -46,7 +40,7 @@ export class ValidatorBase {
     return this._errors.length ? true : false;
   }
 
-  addError(err): this {
+  addError(err: ValidatorError): this {
     this._errors.push(err);
     return this;
   }
