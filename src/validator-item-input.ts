@@ -32,7 +32,7 @@ export class ValidatorItemInput extends ValidatorItem {
    */
   constructor(value: any, fnFromData?: Callback) {
     if (isFunction(fnFromData)) {
-      value = (fnFromData as Function)(value);
+      value = (fnFromData as Callback)(value);
     } else if (fnFromData === undefined) {
       value = asString(value);
     }

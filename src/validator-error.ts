@@ -1,4 +1,3 @@
-import { Translator } from './lib/translator';
 import { IGenericObject } from './lib/util';
 
 export class ValidatorError {
@@ -22,8 +21,8 @@ export class ValidatorError {
     return this.toString();
   }
 
-  public toString() {
-    const tr = 'validator.error.' + this.type;
-    return new Translator(tr).params(this).trIfExists();
-  }
+  // public toString() {
+  //   const tr = 'validator.error.' + this.type;
+  //   return new Translator(tr).params(this).trIfExists();
+  // }
 }

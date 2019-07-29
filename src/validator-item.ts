@@ -131,7 +131,7 @@ export class ValidatorItem extends ValidatorBase {
     }
 
     // Now call a type-specific validator on the value
-    let methodName: string = APPLY_METHOD[rule.type];
+    const methodName: string = APPLY_METHOD[rule.type];
     // @ts-ignore
     if (!methodName || !isFunction(this[methodName])) {
       // This is an error in the rule (not the value) so throw an exception
@@ -342,6 +342,28 @@ export class ValidatorItem extends ValidatorBase {
     return this;
   }
 
+  protected applyNumberLimitTests(val: any, rule: ValidatorRule) {
+    if (isNumber(rule.min) && val < (rule.min as number)) {
+      if (isNumber(rule.default)) {
+        return this.setResult(rule.default);
+      }
+      if (isFunction(rule.default)) {
+        return this.setResult(rule.default(val, rule, 'min'));
+      }
+      throw new ValidatorError(this._label as string, 'min', { min: rule.min });
+    }
+    if (isNumber(rule.max) && val > (rule.max as number)) {
+      if (isNumber(rule.default)) {
+        return this.setResult(rule.default);
+      }
+      if (isFunction(rule.default)) {
+        return this.setResult(rule.default(val, rule, 'max'));
+      }
+      throw new ValidatorError(this._label as string, 'max', { max: rule.max });
+    }
+    return this.setResult(val);
+  }
+
   protected dateApply(val: any, rule: ValidatorRule) {
     if (isDate(val)) {
       return this.applyDateLimitTests(val, rule);
@@ -361,7 +383,9 @@ export class ValidatorItem extends ValidatorBase {
         if (!isNaN(val.getTime())) {
           return this.applyDateLimitTests(val, rule);
         }
-      } catch (err) {}
+      } catch (err) {
+        // empty catch
+      }
     }
     if (isFunction(rule.default)) {
       return rule.default(val, rule);
@@ -426,7 +450,7 @@ export class ValidatorItem extends ValidatorBase {
       let errors: ValidatorError[] = [];
       Object.keys(rule.properties).forEach(prop => {
         try {
-          let item = new ValidatorItem(this._value[prop]);
+          const item = new ValidatorItem(this._value[prop]);
           item.name(prop).validate((rule.properties as IGenericObject)[prop]);
           if (item.hasErrors()) {
             errors = errors.concat(item.errors);
@@ -452,7 +476,7 @@ export class ValidatorItem extends ValidatorBase {
         this._result = [];
         for (const v of this._value) {
           try {
-            let item = new ValidatorItem(v);
+            const item = new ValidatorItem(v);
             item.valueApply(rule.arrayType);
             if (item.hasErrors) {
               this._errors.concat(item.errors);

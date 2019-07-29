@@ -1,7 +1,7 @@
 import { IGenericObject, Callback, deepEquals } from './lib/util';
 import { Validator } from './validator';
 import { ValidatorItemInput } from './validator-item-input';
-import { ValidatorRule, ValidatorRuleParams } from './validator-rule';
+import { ValidatorRule, IValidatorRuleParams } from './validator-rule';
 import { ValidatorItem } from './validator-item';
 
 /**
@@ -18,7 +18,7 @@ export class InputValidator extends Validator {
   protected _changes: IGenericObject;
   protected _refDoc?: IGenericObject;
   protected _name?: string;
-  protected _rule?: ValidatorRuleParams;
+  protected _rule?: IValidatorRuleParams;
 
   constructor(changes: IGenericObject = {}) {
     super();

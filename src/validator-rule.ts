@@ -20,30 +20,30 @@ interface IValidatorRuleParamHack {
   [index: string]: any;
 }
 
-export interface ValidatorRuleParams {
+export interface IValidatorRuleParams {
   name?: string;
   label?: string;
   type: string;
   format?: string;
-  readonly pattern?: RegExp | Function;
+  readonly pattern?: RegExp | Callback;
   readonly default?: any;
   readonly min?: number;
   readonly max?: number;
-  readonly sanitize?: any;
-  required?: boolean | ValidatorRuleProperties;
-  optional?: boolean | ValidatorRuleProperties;
+  readonly sanitize?: boolean | string | Callback;
+  required?: boolean | IValidatorRuleProperties;
+  optional?: boolean | IValidatorRuleProperties;
   strict?: boolean;
-  properties?: ValidatorRuleProperties;
+  properties?: IValidatorRuleProperties;
   arrayType?: string; // if an array, the entries must be of this type
   appendToArray?: boolean; // for arrays
   fromView?: Callback; // hook to allow value to be manipulated, eg converting 0/1 to false/true XXX use sanitize instead
 }
 
-export interface ValidatorRuleProperties {
-  [key: string]: ValidatorRuleParams;
+export interface IValidatorRuleProperties {
+  [key: string]: IValidatorRuleParams;
 }
 
-const RULE_LIBRARY: { [key: string]: ValidatorRuleParams } = {
+const RULE_LIBRARY: { [key: string]: IValidatorRuleParams } = {
   url: { type: 'string', pattern: /^https?:\/\// },
   email: {
     type: 'string',
@@ -119,9 +119,9 @@ export class ValidatorRule {
    * as a push
    *
    */
-  constructor(rule: ValidatorRuleParams | string) {
+  constructor(rule: IValidatorRuleParams | string) {
     if (isObject(rule)) {
-      const r = rule as ValidatorRuleParams;
+      const r = rule as IValidatorRuleParams;
       Object.assign(this, r);
       if (isString(r.format) && RULE_LIBRARY[r.format as string]) {
         Object.assign(this, RULE_LIBRARY[r.format as string]);
@@ -163,10 +163,10 @@ export class ValidatorRule {
    * @param {Object} rule - Generic object potentially with 'properties',
    * 'required' and 'optional' dictionaries
    */
-  private _recurse(rule: ValidatorRuleParams): this {
+  private _recurse(rule: IValidatorRuleParams): this {
     const props: ValidatorRule[] = [];
     if (isObject(rule.properties)) {
-      const p = rule.properties as { [key: string]: ValidatorRuleParams };
+      const p = rule.properties as { [key: string]: IValidatorRuleParams };
       Object.keys(p).forEach(key => {
         const subRule = new ValidatorRule(p[key]);
         props.push(subRule);

@@ -1,5 +1,3 @@
-// import { LogManager } from 'aurelia-framework';
-import { Translator } from './lib/translator';
 import { ValidatorError } from './validator-error';
 import { ValidatorItem } from './validator-item';
 import { IGenericObject } from './lib/util';
@@ -26,21 +24,21 @@ export class Validator extends ValidatorBase {
     return this;
   }
 
-  public errorString(trParams: IGenericObject = {}) {
-    if (this.hasErrors) {
-      // logger.debug('errorString', this._errors);
-      trParams.msg = this._errors
-        .map(err => {
-          return err.toString();
-        })
-        .join(', ');
-      let tr = 'validator.badData';
-      return new Translator(tr).params(trParams).tr();
-    }
-  }
+  // public errorString(trParams: IGenericObject = {}) {
+  //   if (this.hasErrors) {
+  //     // logger.debug('errorString', this._errors);
+  //     trParams.msg = this._errors
+  //       .map(err => {
+  //         return err.toString();
+  //       })
+  //       .join(', ');
+  //     const tr = 'validator.badData';
+  //     return new Translator(tr).params(trParams).tr();
+  //   }
+  // }
 
   public asError(trParams: IGenericObject): Error {
-    let msg = this.errorString(trParams);
+    const msg = this.errorString(trParams);
     return new Error(msg);
   }
 
