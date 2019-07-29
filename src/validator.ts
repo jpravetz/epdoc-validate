@@ -1,6 +1,5 @@
 import { ValidatorError } from './validator-error';
 import { ValidatorItem } from './validator-item';
-import { IGenericObject } from './lib/util';
 import { ValidatorBase } from './validator-base';
 
 // let logger = LogManager.getLogger('validator');
@@ -37,12 +36,12 @@ export class Validator extends ValidatorBase {
   //   }
   // }
 
-  public asError(trParams: IGenericObject): Error {
-    const msg = this.errorString(trParams);
-    return new Error(msg);
-  }
+  // public asError(trParams: IGenericObject): Error {
+  //   const msg = this.errorString(trParams);
+  //   return new Error(msg);
+  // }
 
-  public newError(trParams: IGenericObject): Error {
-    return new Error(this.errorString(trParams));
-  }
+  // public newError(trParams: IGenericObject): Error {
+  //   return new Error(this.errorString(trParams));
+  // }
 }

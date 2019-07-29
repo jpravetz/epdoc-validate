@@ -95,7 +95,7 @@ export class InputValidator extends Validator {
             ._itemValidator as ValidatorItem).output;
         }
       } else {
-        const name: string = (this._itemValidator as ValidatorItem).getName();
+        const name: string = (this._itemValidator as ValidatorItem).getName() as string;
         (this._changes as IGenericObject)[name] = (this
           ._itemValidator as ValidatorItem).output;
       }

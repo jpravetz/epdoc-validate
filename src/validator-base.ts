@@ -16,10 +16,6 @@ export class ValidatorBase {
     return this;
   }
 
-  get ref() {
-    return undefined;
-  }
-
   get parent() {
     return this._parent;
   }
