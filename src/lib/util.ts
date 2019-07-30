@@ -14,15 +14,15 @@ export interface IGenericObject {
 }
 export type Callback = (val: any) => any;
 
-export function isNumber(val: any) {
+export function isNumber(val: any): val is number {
   return typeof val === 'number' && !isNaN(val);
 }
 
-export function isPosNumber(val: any) {
+export function isPosNumber(val: any): val is number {
   return typeof val === 'number' && !isNaN(val) && val > 0;
 }
 
-export function isInteger(val: any) {
+export function isInteger(val: any): val is number {
   return isNumber(val) && Number.isInteger(val);
 }
 
@@ -30,7 +30,7 @@ export function isInteger(val: any) {
  * Is 1,2,3,4,...
  * @param {Number} val
  */
-export function isPosInteger(val: any) {
+export function isPosInteger(val: any): val is number {
   return isNumber(val) && Number.isInteger(val) && val > 0;
 }
 
@@ -38,17 +38,17 @@ export function notString(val: any) {
   return typeof val !== 'string' || val.length === 0;
 }
 
-export function isNonEmptyString(val: any, path?: string) {
+export function isNonEmptyString(val: any, path?: string): val is string {
   val = path ? getPropertyValue(val, path) : val;
   return typeof val === 'string' && val.length > 0;
 }
 
-export function isString(val: any, path?: string) {
+export function isString(val: any, path?: string): val is string {
   const s = path ? getPropertyValue(val, path) : val;
   return typeof s === 'string';
 }
 
-export function isBoolean(val: any) {
+export function isBoolean(val: any): val is boolean {
   return typeof val === 'boolean';
 }
 
@@ -56,11 +56,11 @@ export function isFunction(val: any) {
   return typeof val === 'function';
 }
 
-export function isRegExp(val: any) {
+export function isRegExp(val: any): val is RegExp {
   return val instanceof RegExp;
 }
 
-export function isNull(val: any) {
+export function isNull(val: any): val is null {
   return val === null ? true : false;
 }
 
@@ -68,24 +68,24 @@ export function isDefined(val: any) {
   return val !== undefined;
 }
 
-export function isNonEmptyArray(val: any, path?: string) {
-  const a = path ? getPropertyValue(val, path) : val;
-  return Array.isArray(a) && a.length;
+export function isNonEmptyArray(val: any, path?: string): val is [] {
+  const a: any = path ? getPropertyValue(val, path) : val;
+  return Array.isArray(a) && a.length > 0;
 }
 
 export function isEmpty(obj: IGenericObject) {
   return Object.keys(obj).length === 0 && obj.constructor === Object;
 }
 
-export function isError(val: any) {
+export function isError(val: any): val is Error {
   return val instanceof Error;
 }
 
-export function isDate(val: any) {
+export function isDate(val: any): val is Date {
   return val instanceof Date;
 }
 
-export function isArray(val: any) {
+export function isArray(val: any): val is [] {
   return Array.isArray(val);
 }
 
@@ -235,7 +235,7 @@ export function validateProperty(
   }
 }
 
-export function isTrue(val: any) {
+export function isTrue(val: any): boolean {
   if (typeof val === 'number') {
     return val > 0 ? true : false;
   } else if (typeof val === 'string') {
@@ -246,7 +246,7 @@ export function isTrue(val: any) {
   return false;
 }
 
-export function isFalse(val: any) {
+export function isFalse(val: any): boolean {
   if (typeof val === 'number') {
     return val === 0 ? true : false;
   } else if (typeof val === 'string') {
@@ -257,7 +257,7 @@ export function isFalse(val: any) {
   return false;
 }
 
-export function asFloat(val: any) {
+export function asFloat(val: any): number {
   if (typeof val === 'number') {
     return val;
   } else if (isNonEmptyString(val)) {
@@ -266,7 +266,7 @@ export function asFloat(val: any) {
   return 0;
 }
 
-export function asInteger(val: any) {
+export function asInteger(val: any): number {
   if (typeof val === 'number') {
     return Number.isInteger(val) ? val : Math.round(val);
   } else if (isNonEmptyString(val)) {
@@ -282,7 +282,7 @@ export function asInteger(val: any) {
  * @param [z='0'] {char} character with which to pad string.
  * @returns {String}
  */
-export function pad(n: number, width: number, z: string) {
+export function pad(n: number, width: number, z: string): string {
   z = z || '0';
   const sn = String(n);
   return sn.length >= width ? sn : new Array(width - sn.length + 1).join(z) + sn;
