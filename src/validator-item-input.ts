@@ -1,21 +1,21 @@
 import { ValidatorItem } from './validator-item';
-import { Callback, hasValue, isString, isDate, isArray } from './lib/util';
-import { isFunction, isObject } from 'util';
+import { ValueCallback } from '.';
+import { Util } from './lib/util';
 
 function asString(val: any): string {
-  if (isString(val)) {
+  if (Util.isString(val)) {
     if (val.length > 0) {
       return val.trim();
     }
     return val;
   }
-  if (!hasValue(val)) {
+  if (!Util.hasValue(val)) {
     return '';
   }
-  if (isDate(val)) {
+  if (Util.isDate(val)) {
     return val.toISOString();
   }
-  if (isObject(val) || isArray(val)) {
+  if (Util.isObject(val) || Util.isArray(val)) {
     throw new Error('InputValidator does not permit complex values');
   }
   return String(val);
@@ -30,9 +30,9 @@ export class ValidatorItemInput extends ValidatorItem {
    * @param fnFromData - If set to null then does not cast value to a string. If
    * a function then calls the function with value.
    */
-  constructor(value: any, fnFromData?: Callback) {
-    if (isFunction(fnFromData)) {
-      value = (fnFromData as Callback)(value);
+  constructor(value: any, fnFromData?: ValueCallback) {
+    if (Util.isFunction(fnFromData)) {
+      value = (fnFromData as ValueCallback)(value);
     } else if (fnFromData === undefined) {
       value = asString(value);
     }

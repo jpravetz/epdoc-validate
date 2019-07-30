@@ -1,11 +1,11 @@
-import { GenericObject } from '../src/lib/util';
 import { InputValidator } from '../src/input-validator';
+import { IGenericObject } from '../src';
 
 describe('input', () => {
   describe('boolean', () => {
     it('simple', () => {
       const RULE = { type: 'boolean', sanitize: true };
-      let changes: GenericObject = {};
+      let changes: IGenericObject = {};
       let validator = new InputValidator(changes);
       validator
         .input('short')

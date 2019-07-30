@@ -1,4 +1,4 @@
-import { IGenericObject } from './lib/util';
+import { IGenericObject } from '.';
 
 export class ValidatorError {
   public key: string;

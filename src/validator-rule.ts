@@ -1,12 +1,5 @@
-import {
-  isObject,
-  isNonEmptyString,
-  isString,
-  IGenericObject,
-  schemaTypeValidator,
-  validSchemaTypes,
-  Callback
-} from './lib/util';
+import { Util } from './lib/util';
+import { IValidatorRuleParams, IGenericObject, ValueCallback } from '.';
 
 const FORMAT_LIBRARY = {
   email: /^(?:[a-zA-Z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-zA-Z0-9!#$%&'*+/=?^_`{|}~-]+)*|"(?:[\x01-\x08\x0b\x0c\x0e-\x1f\x21\x23-\x5b\x5d-\x7f]|\\[\x01-\x09\x0b\x0c\x0e-\x7f])*")@(?:(?:[a-zA-Z0-9](?:[a-zA-Z0-9-]*[a-zA-Z0-9])?\.)+[a-zA-Z0-9](?:[a-zA-Z0-9-]*[a-zA-Z0-9])?|\[(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?|[a-zA-Z0-9-]*[a-zA-Z0-9]:(?:[\x01-\x08\x0b\x0c\x0e-\x1f\x21-\x5a\x53-\x7f]|\\[\x01-\x09\x0b\x0c\x0e-\x7f])+)\])$/,
@@ -19,29 +12,7 @@ const FORMAT_LIBRARY = {
 interface IValidatorRuleParamHack {
   [index: string]: any;
 }
-
-export interface IValidatorRuleParams {
-  name?: string;
-  label?: string;
-  type: string;
-  format?: string;
-  readonly pattern?: RegExp | Callback;
-  readonly default?: any;
-  readonly min?: number;
-  readonly max?: number;
-  readonly sanitize?: boolean | string | Callback;
-  required?: boolean | IValidatorRuleProperties;
-  optional?: boolean | IValidatorRuleProperties;
-  strict?: boolean;
-  properties?: IValidatorRuleProperties;
-  arrayType?: string; // if an array, the entries must be of this type
-  appendToArray?: boolean; // for arrays
-  fromView?: Callback; // hook to allow value to be manipulated, eg converting 0/1 to false/true XXX use sanitize instead
-}
-
-export interface IValidatorRuleProperties {
-  [key: string]: IValidatorRuleParams;
-}
+Util;
 
 const RULE_LIBRARY: { [key: string]: IValidatorRuleParams } = {
   url: { type: 'string', pattern: /^https?:\/\// },
@@ -88,7 +59,7 @@ export class ValidatorRule {
   public properties?: IGenericObject;
   public arrayType?: any; // if an array, the entries must be of this type
   public appendToArray?: boolean; // for arrays
-  public fromView?: Callback; // hook to allow value to be manipulated, eg converting 0/1 to false/true XXX use sanitize instead
+  public fromView?: ValueCallback; // hook to allow value to be manipulated, eg converting 0/1 to false/true XXX use sanitize instead
 
   /**
    * @param {Object|string} rule - The rule or a reference to a predefined rule
@@ -120,14 +91,14 @@ export class ValidatorRule {
    *
    */
   constructor(rule: IValidatorRuleParams | string) {
-    if (isObject(rule)) {
+    if (Util.isObject(rule)) {
       const r = rule as IValidatorRuleParams;
       Object.assign(this, r);
-      if (isString(r.format) && RULE_LIBRARY[r.format as string]) {
+      if (Util.isString(r.format) && RULE_LIBRARY[r.format as string]) {
         Object.assign(this, RULE_LIBRARY[r.format as string]);
       }
       this._recurse(r);
-    } else if (isNonEmptyString(rule)) {
+    } else if (Util.isNonEmptyString(rule)) {
       this._fromLibrary(rule as string);
     }
     this.label = this.label ? this.label : this.name;
@@ -147,9 +118,9 @@ export class ValidatorRule {
     } else {
       const types = sRule.split('|');
       for (const type of types) {
-        if (schemaTypeValidator(type) === undefined) {
+        if (Util.schemaTypeValidator(type) === undefined) {
           throw new Error(
-            `Invalid type ${sRule} must be one of ${validSchemaTypes.join(', ')}`
+            `Invalid type ${sRule} must be one of ${Util.validSchemaTypes.join(', ')}`
           );
         }
       }
@@ -165,7 +136,7 @@ export class ValidatorRule {
    */
   private _recurse(rule: IValidatorRuleParams): this {
     const props: ValidatorRule[] = [];
-    if (isObject(rule.properties)) {
+    if (Util.isObject(rule.properties)) {
       const p = rule.properties as { [key: string]: IValidatorRuleParams };
       Object.keys(p).forEach(key => {
         const subRule = new ValidatorRule(p[key]);
@@ -173,7 +144,7 @@ export class ValidatorRule {
       });
     }
     ['required', 'optional'].forEach((prop: string) => {
-      if (isObject((rule as IValidatorRuleParamHack)[prop])) {
+      if (Util.isObject((rule as IValidatorRuleParamHack)[prop])) {
         Object.keys((rule as IValidatorRuleParamHack)[prop]).forEach(key => {
           const subRule = new ValidatorRule((rule as IValidatorRuleParamHack)[prop][key]);
           (subRule as IValidatorRuleParamHack)[prop] = true;

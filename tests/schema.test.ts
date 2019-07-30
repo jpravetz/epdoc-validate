@@ -1,27 +1,32 @@
-import {
-  validSchemaTypes, validateType, deepEquals
-} from '../src/lib/util';
+import { Util } from '../src/lib/util';
 
 describe('schema util', () => {
-
   it('validSchemaTypes', () => {
-    let x = validSchemaTypes;
-    let result = deepEquals(x, ['string', 'number', 'boolean', 'null', 'object', 'array', 'date', 'any', 'integer']);
+    let x = Util.validSchemaTypes;
+    let result = Util.deepEquals(x, [
+      'string',
+      'number',
+      'boolean',
+      'null',
+      'object',
+      'array',
+      'date',
+      'any',
+      'integer'
+    ]);
     expect(result).toBe(true);
   });
 
-
   it('validateType', () => {
-    expect(validateType('string', 'string')).toBe(true);
-    expect(validateType('string', 'string|number')).toBe(true);
-    expect(validateType(4, 'string|number')).toBe(true);
-    expect(validateType({}, 'string|number')).toBe(false);
-    expect(validateType({}, 'object|number')).toBe(true);
-    expect(validateType(new Date(), 'string|date')).toBe(true);
-    expect(validateType(new Date(), 'string|object')).toBe(false);
-    expect(validateType(['a'], ['string', 'object'])).toBe(false);
-    expect(validateType(['a'], ['string', 'array'])).toBe(true);
-    expect(validateType(['a'], 'array')).toBe(true);
+    expect(Util.validateType('string', 'string')).toBe(true);
+    expect(Util.validateType('string', 'string|number')).toBe(true);
+    expect(Util.validateType(4, 'string|number')).toBe(true);
+    expect(Util.validateType({}, 'string|number')).toBe(false);
+    expect(Util.validateType({}, 'object|number')).toBe(true);
+    expect(Util.validateType(new Date(), 'string|date')).toBe(true);
+    expect(Util.validateType(new Date(), 'string|object')).toBe(false);
+    expect(Util.validateType(['a'], ['string', 'object'])).toBe(false);
+    expect(Util.validateType(['a'], ['string', 'array'])).toBe(true);
+    expect(Util.validateType(['a'], 'array')).toBe(true);
   });
-
 });

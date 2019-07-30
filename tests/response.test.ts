@@ -1,5 +1,5 @@
+import { Util } from '../src/lib/util';
 import { ResponseValidator } from '../src/response-validator';
-import { GenericObject, deepCopy } from '../src/lib/util';
 
 describe('response', () => {
   describe('primitive', () => {
@@ -71,9 +71,9 @@ describe('response', () => {
       });
 
       it('integer strict required no default', () => {
-        let rule = deepCopy(RULE);
+        let rule = Util.deepCopy(RULE);
         rule.properties.e.default = undefined;
-        let expected = deepCopy(EXPECTED);
+        let expected = Util.deepCopy(EXPECTED);
         expected.e = undefined;
         let validator = new ResponseValidator();
         validator.input(RESPONSE).validate(rule);

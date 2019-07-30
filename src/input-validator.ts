@@ -1,11 +1,12 @@
-import { IGenericObject, Callback, deepEquals } from './lib/util';
-import { Validator } from './validator';
+import { ValidatorBase } from './validator-base';
 import { ValidatorItemInput } from './validator-item-input';
-import { ValidatorRule, IValidatorRuleParams } from './validator-rule';
+import { ValidatorRule } from './validator-rule';
 import { ValidatorItem } from './validator-item';
+import { ValueCallback, IGenericObject, IValidatorRuleParams } from '.';
+import { Util } from './lib/util';
 
 /**
- * Intended for the purpose of gathering values from UI, comparing them against
+ * Intended for the purpose of gathering values from UI,  dcomparing them against
  * an existing document, then adding the changed value to a changes object. For
  * this reason, this should probably not be used for nested objects that need to
  * be compared.
@@ -14,11 +15,10 @@ import { ValidatorItem } from './validator-item';
  * are valid, they are added to changes. But if a reference doc is specified,
  * they are only added if there is a diff to the reference doc.
  */
-export class InputValidator extends Validator {
+export class InputValidator extends ValidatorBase {
   protected _changes: IGenericObject;
   protected _refDoc?: IGenericObject;
   protected _name?: string;
-  protected _rule?: IValidatorRuleParams;
 
   constructor(changes: IGenericObject = {}) {
     super();
@@ -59,7 +59,7 @@ export class InputValidator extends Validator {
     return this._changes;
   }
 
-  public input(val: any, fnFromData?: Callback): this {
+  public input(val: any, fnFromData?: ValueCallback): this {
     this._itemValidator = new ValidatorItemInput(val, fnFromData);
     this.applyChainVariables();
     this._itemValidator.changes = this._changes;
@@ -67,14 +67,10 @@ export class InputValidator extends Validator {
     return this;
   }
 
-  public validate(rule?: any): this {
-    if (rule) {
-      this._rule = rule;
-    }
+  public validate(rule: IValidatorRuleParams | IValidatorRuleParams[]): this {
     this.applyChainVariables();
 
-    const rules = Array.isArray(this._rule) ? this._rule : [this._rule];
-    this._rule = undefined;
+    const rules: IValidatorRuleParams[] = Array.isArray(rule) ? rule : [rule];
     let passed = false;
     for (let idx = 0; idx < rules.length && !passed; ++idx) {
       const validatorRule = new ValidatorRule(rules[idx]);
@@ -86,7 +82,7 @@ export class InputValidator extends Validator {
     if (passed) {
       if (this._refDoc) {
         if (
-          !deepEquals(
+          !Util.deepEquals(
             (this._itemValidator as ValidatorItem).output,
             (this._refDoc as IGenericObject)[this._name as string]
           )
