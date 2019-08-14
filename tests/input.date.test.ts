@@ -1,5 +1,5 @@
 import { InputValidator } from '../src/input-validator';
-import { IGenericObject } from '../src';
+import { Dict } from 'epdoc-util';
 
 describe('input', () => {
   describe('date', () => {
@@ -7,7 +7,7 @@ describe('input', () => {
       const RULE = { type: 'date', sanitize: true };
       let i0 = new Date(2001, 1);
       let i1 = '2019-07-26T19:34:03.258Z';
-      let changes: IGenericObject = {};
+      let changes: Dict = {};
       let validator = new InputValidator(changes);
       validator
         .input('not a date')

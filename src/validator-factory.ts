@@ -1,4 +1,4 @@
-import { IGenericObject } from './lib/util';
+import { Dict } from 'epdoc-util';
 import { InputValidator } from './input-validator';
 import { ResponseValidator } from './response-validator';
 
@@ -9,7 +9,7 @@ export class ValidatorFactory {
    * For validating input fields, one at a time
    * @param changes - where results are to be written
    */
-  static input(changes: IGenericObject = {}): InputValidator {
+  static input(changes: Dict = {}): InputValidator {
     return new InputValidator(changes);
   }
 

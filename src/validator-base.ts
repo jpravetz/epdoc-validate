@@ -1,7 +1,7 @@
 import { ValidatorError } from './validator-error';
 import { ValidatorItem } from './validator-item';
 import { ValidatorAllBase } from './validator-all-base';
-import { IValidatorRuleParams } from '.';
+import { IValidatorRuleParams } from './declarations';
 
 export class ValidatorBase extends ValidatorAllBase {
   protected _itemValidator?: ValidatorItem;

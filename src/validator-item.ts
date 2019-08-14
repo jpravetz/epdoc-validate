@@ -1,8 +1,18 @@
 import { ValidatorError } from './validator-error';
 import { ValidatorRule } from './validator-rule';
 import { ValidatorAllBase } from './validator-all-base';
-import { IGenericObject } from '.';
-import { Util } from './lib/util';
+import {
+  isObject,
+  isString,
+  isFunction,
+  isNumber,
+  isBoolean,
+  hasValue,
+  Dict,
+  deepCopy,
+  isRegExp,
+  isDate
+} from 'epdoc-util';
 
 const REGEX = {
   string: /^(string)$/,
@@ -29,8 +39,8 @@ const APPLY_METHOD: { [key: string]: string } = {
 
 export class ValidatorItem extends ValidatorAllBase {
   protected _value: any;
-  protected _changes?: IGenericObject;
-  protected _refDoc?: IGenericObject;
+  protected _changes?: Dict;
+  protected _refDoc?: Dict;
 
   // track errors here for objects with properties, so we collect them all before failing
   protected _name?: string;
@@ -70,14 +80,14 @@ export class ValidatorItem extends ValidatorAllBase {
    * Can be overridden by subclasses
    */
   public hasValue() {
-    return Util.hasValue(this._value);
+    return hasValue(this._value);
   }
 
-  set changes(val: IGenericObject) {
+  set changes(val: Dict) {
     this._changes = val;
   }
 
-  set refDoc(val: IGenericObject) {
+  set refDoc(val: Dict) {
     this._refDoc = val;
   }
 
@@ -121,7 +131,7 @@ export class ValidatorItem extends ValidatorAllBase {
     // Now call a type-specific validator on the value
     const methodName: string = APPLY_METHOD[rule.type];
     // @ts-ignore
-    if (!methodName || !Util.isFunction(this[methodName])) {
+    if (!methodName || !isFunction(this[methodName])) {
       // This is an error in the rule (not the value) so throw an exception
       throw new Error(`Invalid rule type '${rule.type}'`);
     }
@@ -148,13 +158,13 @@ export class ValidatorItem extends ValidatorAllBase {
     if (val === null) {
       return this.setResult(val);
     }
-    if (Util.isFunction(rule.sanitize)) {
+    if (isFunction(rule.sanitize)) {
       return this.setResult(rule.sanitize(val, rule));
     }
     if (rule.default === null) {
       return this.setResult(rule.default);
     }
-    if (Util.isFunction(rule.default)) {
+    if (isFunction(rule.default)) {
       return this.setResult(rule.default(val, rule));
     }
     if (rule.required) {
@@ -173,17 +183,17 @@ export class ValidatorItem extends ValidatorAllBase {
    * @param {*} val
    */
   protected booleanApply(val: any, rule: ValidatorRule) {
-    if (Util.isBoolean(val)) {
+    if (isBoolean(val)) {
       return this.setResult(val);
     }
-    if (Util.isFunction(rule.sanitize)) {
+    if (isFunction(rule.sanitize)) {
       return this.setResult(rule.sanitize(val, rule));
     }
     if (rule.sanitize === true || rule.sanitize === 'boolean') {
-      if (Util.isNumber(val)) {
+      if (isNumber(val)) {
         return this.setResult(val > 0);
       }
-      if (Util.isString(val)) {
+      if (isString(val)) {
         if (REGEX.isTrue.test(val)) {
           return this.setResult(true);
         }
@@ -195,10 +205,10 @@ export class ValidatorItem extends ValidatorAllBase {
         }
       }
     }
-    if (Util.isBoolean(rule.default)) {
+    if (isBoolean(rule.default)) {
       return this.setResult(rule.default);
     }
-    if (Util.isFunction(rule.default)) {
+    if (isFunction(rule.default)) {
       return this.setResult(rule.default(val, rule));
     }
     if (rule.required && val) {
@@ -212,18 +222,18 @@ export class ValidatorItem extends ValidatorAllBase {
    * @param {*} val
    */
   protected stringApply(val: any, rule: ValidatorRule) {
-    if (Util.isString(val)) {
+    if (isString(val)) {
       return this.applyStringLengthTests(val, rule);
     }
     if (rule.default && (val === undefined || val === null)) {
-      if (Util.isString(rule.default)) {
+      if (isString(rule.default)) {
         return this.setResult(rule.default);
       }
-      if (Util.isFunction(rule.default)) {
+      if (isFunction(rule.default)) {
         return this.setResult(rule.default(val, rule));
       }
     }
-    if (Util.isFunction(rule.sanitize)) {
+    if (isFunction(rule.sanitize)) {
       val = rule.sanitize(val, rule);
       return this.applyStringLengthTests(val, rule);
     }
@@ -237,30 +247,30 @@ export class ValidatorItem extends ValidatorAllBase {
   }
 
   protected applyStringLengthTests(val: any, rule: ValidatorRule) {
-    if (Util.isRegExp(rule.pattern)) {
+    if (isRegExp(rule.pattern)) {
       if (!rule.pattern.test(val)) {
         throw new ValidatorError(this.label as string, 'invalid');
       }
     }
-    if (Util.isFunction(rule.pattern)) {
+    if (isFunction(rule.pattern)) {
       if (!rule.pattern(val, rule)) {
         throw new ValidatorError(this.label as string, 'invalid');
       }
     }
-    if (Util.isNumber(rule.min) && val.length < (rule.min as number)) {
-      if (Util.isString(rule.default)) {
+    if (isNumber(rule.min) && val.length < (rule.min as number)) {
+      if (isString(rule.default)) {
         return this.setResult(rule.default);
       }
-      if (Util.isFunction(rule.default)) {
+      if (isFunction(rule.default)) {
         return this.setResult(rule.default(val, rule, 'min'));
       }
       throw new ValidatorError(this.label as string, 'lenMin', { min: rule.min });
     }
-    if (Util.isNumber(rule.max) && val.length > (rule.max as number)) {
-      if (Util.isString(rule.default)) {
+    if (isNumber(rule.max) && val.length > (rule.max as number)) {
+      if (isString(rule.default)) {
         return this.setResult(rule.default);
       }
-      if (Util.isFunction(rule.default)) {
+      if (isFunction(rule.default)) {
         return this.setResult(rule.default(val, rule, 'max'));
       }
       throw new ValidatorError(this.label as string, 'lenMax', { max: rule.max });
@@ -274,9 +284,9 @@ export class ValidatorItem extends ValidatorAllBase {
    */
   protected numberApply(val: any, rule: ValidatorRule): ValidatorItem {
     const isInt: boolean = REGEX.integer.test(rule.type);
-    if (Util.isNumber(val)) {
+    if (isNumber(val)) {
       if (isInt) {
-        if (Util.isFunction(rule.sanitize)) {
+        if (isFunction(rule.sanitize)) {
           val = rule.sanitize(val, rule);
           return this.applyNumberLimitTests(val, rule);
         }
@@ -285,7 +295,7 @@ export class ValidatorItem extends ValidatorAllBase {
           return this.applyNumberLimitTests(val, rule);
         }
         // @ts-ignore
-        if (Util.isString(rule.sanitize) && Util.isFunction(Math[rule.sanitize])) {
+        if (isString(rule.sanitize) && isFunction(Math[rule.sanitize])) {
           // @ts-ignore
           val = Math[rule.sanitize](val);
           return this.applyNumberLimitTests(val, rule);
@@ -296,7 +306,7 @@ export class ValidatorItem extends ValidatorAllBase {
       }
       return this.applyNumberLimitTests(val, rule);
     }
-    if (Util.isString(val)) {
+    if (isString(val)) {
       if (isInt) {
         const valAsInt: any = Math.round(parseFloat(val));
         if (isNaN(valAsInt)) {
@@ -331,20 +341,20 @@ export class ValidatorItem extends ValidatorAllBase {
   }
 
   protected applyNumberLimitTests(val: any, rule: ValidatorRule) {
-    if (Util.isNumber(rule.min) && val < (rule.min as number)) {
-      if (Util.isNumber(rule.default)) {
+    if (isNumber(rule.min) && val < (rule.min as number)) {
+      if (isNumber(rule.default)) {
         return this.setResult(rule.default);
       }
-      if (Util.isFunction(rule.default)) {
+      if (isFunction(rule.default)) {
         return this.setResult(rule.default(val, rule, 'min'));
       }
       throw new ValidatorError(this._label as string, 'min', { min: rule.min });
     }
-    if (Util.isNumber(rule.max) && val > (rule.max as number)) {
-      if (Util.isNumber(rule.default)) {
+    if (isNumber(rule.max) && val > (rule.max as number)) {
+      if (isNumber(rule.default)) {
         return this.setResult(rule.default);
       }
-      if (Util.isFunction(rule.default)) {
+      if (isFunction(rule.default)) {
         return this.setResult(rule.default(val, rule, 'max'));
       }
       throw new ValidatorError(this._label as string, 'max', { max: rule.max });
@@ -353,16 +363,16 @@ export class ValidatorItem extends ValidatorAllBase {
   }
 
   protected dateApply(val: any, rule: ValidatorRule) {
-    if (Util.isDate(val)) {
+    if (isDate(val)) {
       return this.applyDateLimitTests(val, rule);
     }
-    if (Util.hasValue(val)) {
-      if (Util.isFunction(rule.sanitize)) {
+    if (hasValue(val)) {
+      if (isFunction(rule.sanitize)) {
         val = rule.sanitize(val, rule);
         return this.applyDateLimitTests(val, rule);
       }
       if (rule.sanitize === true || rule.sanitize === 'date') {
-        if (Util.isString(val) && REGEX.isWholeNumber.test(val)) {
+        if (isString(val) && REGEX.isWholeNumber.test(val)) {
           val = parseInt(val, 10);
         }
       }
@@ -375,10 +385,10 @@ export class ValidatorItem extends ValidatorAllBase {
         // empty catch
       }
     }
-    if (Util.isFunction(rule.default)) {
+    if (isFunction(rule.default)) {
       return rule.default(val, rule);
     }
-    if (Util.hasValue(rule.default)) {
+    if (hasValue(rule.default)) {
       return new Date(rule.default);
     }
     if (rule.required) {
@@ -388,20 +398,20 @@ export class ValidatorItem extends ValidatorAllBase {
   }
 
   protected applyDateLimitTests(val: any, rule: ValidatorRule) {
-    if (Util.hasValue(rule.min) && val < (rule.min as number)) {
-      if (Util.isFunction(rule.default)) {
+    if (hasValue(rule.min) && val < (rule.min as number)) {
+      if (isFunction(rule.default)) {
         return this.setResult(rule.default(val, rule, 'min'));
       }
-      if (Util.hasValue(rule.default)) {
+      if (hasValue(rule.default)) {
         return this.setResult(new Date(rule.default));
       }
       throw new ValidatorError(this._label as string, 'dateMin', { min: rule.min });
     }
-    if (Util.hasValue(rule.max) && val > (rule.max as number)) {
-      if (Util.isFunction(rule.default)) {
+    if (hasValue(rule.max) && val > (rule.max as number)) {
+      if (isFunction(rule.default)) {
         return this.setResult(rule.default(val, rule, 'max'));
       }
-      if (Util.hasValue(rule.default)) {
+      if (hasValue(rule.default)) {
         return this.setResult(new Date(rule.default));
       }
       throw new ValidatorError(this._label as string, 'dateMax', { max: rule.max });
@@ -410,22 +420,22 @@ export class ValidatorItem extends ValidatorAllBase {
   }
 
   protected objectApply(val: any, rule: ValidatorRule): ValidatorItem {
-    if (Util.isObject(val)) {
+    if (isObject(val)) {
       this._result = {};
       this.propertiesApply(rule);
       return this;
     }
-    if (Util.hasValue(val)) {
-      if (Util.isFunction(rule.sanitize)) {
+    if (hasValue(val)) {
+      if (isFunction(rule.sanitize)) {
         return this.setResult(rule.sanitize(val, rule));
       }
       throw new ValidatorError(this.label as string, 'invalid');
     }
-    if (Util.isFunction(rule.default)) {
+    if (isFunction(rule.default)) {
       return this.setResult(rule.default(val, rule));
     }
-    if (Util.isObject(rule.default)) {
-      return this.setResult(Util.deepCopy(rule.default));
+    if (isObject(rule.default)) {
+      return this.setResult(deepCopy(rule.default));
     }
     if (rule.required) {
       throw new ValidatorError(this.label as string, 'missing');
@@ -439,7 +449,7 @@ export class ValidatorItem extends ValidatorAllBase {
       Object.keys(rule.properties).forEach(prop => {
         try {
           const item = new ValidatorItem(this._value[prop]);
-          item.name(prop).validate((rule.properties as IGenericObject)[prop]);
+          item.name(prop).validate((rule.properties as Dict)[prop]);
           if (item.hasErrors()) {
             errors = errors.concat(item.errors);
           } else if (item.output !== undefined) {
@@ -483,7 +493,7 @@ export class ValidatorItem extends ValidatorAllBase {
   }
 
   protected getDefault(rule: ValidatorRule) {
-    if (Util.isFunction(rule.default)) {
+    if (isFunction(rule.default)) {
       return rule.default(this._value, rule);
     }
     return rule.default;

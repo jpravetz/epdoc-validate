@@ -2,8 +2,8 @@ import { ValidatorBase } from './validator-base';
 import { ValidatorItemInput } from './validator-item-input';
 import { ValidatorRule } from './validator-rule';
 import { ValidatorItem } from './validator-item';
-import { ValueCallback, IGenericObject, IValidatorRuleParams } from '.';
-import { Util } from './lib/util';
+import { ValueCallback, IValidatorRuleParams } from './declarations';
+import { Dict, deepEquals } from 'epdoc-util';
 
 /**
  * Intended for the purpose of gathering values from UI,  dcomparing them against
@@ -16,11 +16,11 @@ import { Util } from './lib/util';
  * they are only added if there is a diff to the reference doc.
  */
 export class InputValidator extends ValidatorBase {
-  protected _changes: IGenericObject;
-  protected _refDoc?: IGenericObject;
+  protected _changes: Dict;
+  protected _refDoc?: Dict;
   protected _name?: string;
 
-  constructor(changes: IGenericObject = {}) {
+  constructor(changes: Dict = {}) {
     super();
     this._changes = changes;
   }
@@ -46,16 +46,16 @@ export class InputValidator extends ValidatorBase {
    * on changes if it is different from the reference's value
    * @param {BaseModel} doc
    */
-  public reference(ref: IGenericObject | undefined): this {
+  public reference(ref: Dict | undefined): this {
     this._refDoc = ref;
     return this;
   }
 
-  get ref(): IGenericObject | undefined {
-    return this._refDoc as IGenericObject;
+  get ref(): Dict | undefined {
+    return this._refDoc as Dict;
   }
 
-  get changes(): IGenericObject {
+  get changes(): Dict {
     return this._changes;
   }
 
@@ -63,7 +63,7 @@ export class InputValidator extends ValidatorBase {
     this._itemValidator = new ValidatorItemInput(val, fnFromData);
     this.applyChainVariables();
     this._itemValidator.changes = this._changes;
-    this._itemValidator.refDoc = this._refDoc as IGenericObject;
+    this._itemValidator.refDoc = this._refDoc as Dict;
     return this;
   }
 
@@ -82,18 +82,17 @@ export class InputValidator extends ValidatorBase {
     if (passed) {
       if (this._refDoc) {
         if (
-          !Util.deepEquals(
+          !deepEquals(
             (this._itemValidator as ValidatorItem).output,
-            (this._refDoc as IGenericObject)[this._name as string]
+            (this._refDoc as Dict)[this._name as string]
           )
         ) {
-          (this._changes as IGenericObject)[this._name as string] = (this
+          (this._changes as Dict)[this._name as string] = (this
             ._itemValidator as ValidatorItem).output;
         }
       } else {
         const name: string = (this._itemValidator as ValidatorItem).getName() as string;
-        (this._changes as IGenericObject)[name] = (this
-          ._itemValidator as ValidatorItem).output;
+        (this._changes as Dict)[name] = (this._itemValidator as ValidatorItem).output;
       }
     } else {
       this.addErrors((this._itemValidator as ValidatorItem).errors);

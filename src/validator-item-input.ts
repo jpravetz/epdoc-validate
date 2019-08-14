@@ -1,21 +1,21 @@
 import { ValidatorItem } from './validator-item';
-import { ValueCallback } from '.';
-import { Util } from './lib/util';
+import { ValueCallback } from './declarations';
+import { isString, hasValue, isDate, isObject, isArray, isFunction } from 'epdoc-util';
 
 function asString(val: any): string {
-  if (Util.isString(val)) {
+  if (isString(val)) {
     if (val.length > 0) {
       return val.trim();
     }
     return val;
   }
-  if (!Util.hasValue(val)) {
+  if (!hasValue(val)) {
     return '';
   }
-  if (Util.isDate(val)) {
+  if (isDate(val)) {
     return val.toISOString();
   }
-  if (Util.isObject(val) || Util.isArray(val)) {
+  if (isObject(val) || isArray(val)) {
     throw new Error('InputValidator does not permit complex values');
   }
   return String(val);
@@ -31,7 +31,7 @@ export class ValidatorItemInput extends ValidatorItem {
    * a function then calls the function with value.
    */
   constructor(value: any, fnFromData?: ValueCallback) {
-    if (Util.isFunction(fnFromData)) {
+    if (isFunction(fnFromData)) {
       value = (fnFromData as ValueCallback)(value);
     } else if (fnFromData === undefined) {
       value = asString(value);

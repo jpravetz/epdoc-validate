@@ -1,4 +1,4 @@
-import { IGenericObject } from '../src';
+import { Dict } from 'epdoc-util';
 import { InputValidator } from '../src/input-validator';
 
 describe('input', () => {
@@ -7,7 +7,7 @@ describe('input', () => {
       const RULE1 = { type: 'string', min: 6, max: 10 };
       const RULE2 = { type: 'string', min: 5, max: 100 };
       let i0 = 'short';
-      let changes: IGenericObject = {};
+      let changes: Dict = {};
       let validator = new InputValidator(changes);
       validator
         .input(i0)
@@ -28,7 +28,7 @@ describe('input', () => {
       const RULE1 = [{ type: 'string' }];
       let i0 = null;
       let i1 = 'a string ';
-      let changes: IGenericObject = {};
+      let changes: Dict = {};
       let validator = new InputValidator(changes);
       validator
         .input(i0)
@@ -44,7 +44,7 @@ describe('input', () => {
     });
     it('email', () => {
       const RULE = { type: 'string', format: 'email' };
-      let changes: IGenericObject = {};
+      let changes: Dict = {};
       let i0 = 'short';
       let i1 = 'bob@test.com';
       let validator = new InputValidator(changes);
@@ -64,7 +64,7 @@ describe('input', () => {
 
     it('url', () => {
       const RULE = { type: 'string', format: 'url' };
-      let changes: IGenericObject = {};
+      let changes: Dict = {};
       let i0 = 'http:/invalid.com';
       let i1 = 'http://valid.com';
       let validator = new InputValidator(changes);
@@ -84,7 +84,7 @@ describe('input', () => {
 
     it('username', () => {
       const RULE = { type: 'string', format: 'username' };
-      let changes: IGenericObject = {};
+      let changes: Dict = {};
       let i1 = 'validusername';
       let validator = new InputValidator(changes);
       validator

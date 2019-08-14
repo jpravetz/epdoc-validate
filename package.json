@@ -9,6 +9,7 @@
   "license": "UNLICENSED",
   "private": true,
   "scripts": {
+    "clean": "rm -rf dist coverage",
     "build": "tsc",
     "dev": "microbundle watch",
     "watch": "jest --watch",
@@ -26,14 +27,9 @@
     "node": ">=8"
   },
   "devDependencies": {
-    "@babel/core": "^7.5.0",
-    "@babel/preset-env": "^7.5.0",
-    "@babel/preset-typescript": "^7.3.3",
     "@types/jest": "^24.0.15",
     "babel-jest": "^24.8.0",
-    "babel-preset-env": "^1.7.0",
     "jest": "^24.8.0",
-    "microbundle": "^0.11.0",
     "prettier": "^1.18.2",
     "ts-jest": "^24.0.2",
     "ts-node": "^8.3.0",
@@ -41,5 +37,8 @@
     "tslint-config-prettier": "^1.18.0",
     "tslint-plugin-prettier": "^2.0.1",
     "typescript": "^3.5.3"
+  },
+  "dependencies": {
+    "epdoc-util": "file:../../epdoc/epdoc-util"
   }
 }

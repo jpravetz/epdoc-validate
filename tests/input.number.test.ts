@@ -1,5 +1,5 @@
 import { InputValidator } from '../src/input-validator';
-import { IGenericObject } from '../src';
+import { Dict } from 'epdoc-util';
 
 describe('input', () => {
   describe('number', () => {
@@ -20,7 +20,7 @@ describe('input', () => {
     };
 
     it('pass', () => {
-      let changes: IGenericObject = {};
+      let changes: Dict = {};
       let num = RULE.number.min + 3;
       let validator = new InputValidator(changes);
       validator
@@ -32,7 +32,7 @@ describe('input', () => {
     });
 
     it('max fail', () => {
-      let changes: IGenericObject = {};
+      let changes: Dict = {};
       let validator = new InputValidator(changes);
       validator
         .input(RULE.number.max + 42)
@@ -49,7 +49,7 @@ describe('input', () => {
     });
 
     it('min fail', () => {
-      let changes: IGenericObject = {};
+      let changes: Dict = {};
       let num = RULE.number.min - 42.3;
       let validator = new InputValidator(changes);
       validator
@@ -67,7 +67,7 @@ describe('input', () => {
     });
 
     it('default', () => {
-      let changes: IGenericObject = {};
+      let changes: Dict = {};
       let num = RULE.number5.min + 3;
       let validator = new InputValidator(changes);
       validator
@@ -85,7 +85,7 @@ describe('input', () => {
 
     describe('integer', () => {
       it('pass', () => {
-        let changes: IGenericObject = {};
+        let changes: Dict = {};
         let num = RULE.integer.min + 3;
         let validator = new InputValidator(changes);
         validator
@@ -97,7 +97,7 @@ describe('input', () => {
       });
 
       it('min fail', () => {
-        let changes: IGenericObject = {};
+        let changes: Dict = {};
         let num = RULE.integer.min - 42;
         let validator = new InputValidator(changes);
         validator
@@ -115,7 +115,7 @@ describe('input', () => {
       });
 
       it('valid cast', () => {
-        let changes: IGenericObject = {};
+        let changes: Dict = {};
         let anum = RULE.integer.min + 0.2;
         let bnum = RULE.integer.min + 0.51;
         let validator = new InputValidator(changes);
@@ -133,7 +133,7 @@ describe('input', () => {
       });
 
       it('optional pass', () => {
-        let changes: IGenericObject = {};
+        let changes: Dict = {};
         let num = RULE.integer1.min + 3;
         let validator = new InputValidator(changes);
         validator
@@ -145,7 +145,7 @@ describe('input', () => {
       });
 
       it('strict optional fail', () => {
-        let changes: IGenericObject = {};
+        let changes: Dict = {};
         let num = RULE.integer2.min + 3;
         let validator = new InputValidator(changes);
         validator
@@ -159,7 +159,7 @@ describe('input', () => {
       });
 
       it('strict fail', () => {
-        let changes: IGenericObject = {};
+        let changes: Dict = {};
         let num = RULE.integer3.min + 3;
         let validator = new InputValidator(changes);
         validator

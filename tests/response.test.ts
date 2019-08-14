@@ -1,5 +1,5 @@
-import { Util } from '../src/lib/util';
 import { ResponseValidator } from '../src/response-validator';
+import { deepCopy } from 'epdoc-util';
 
 describe('response', () => {
   describe('primitive', () => {
@@ -71,9 +71,9 @@ describe('response', () => {
       });
 
       it('integer strict required no default', () => {
-        let rule = Util.deepCopy(RULE);
+        let rule = deepCopy(RULE);
         rule.properties.e.default = undefined;
-        let expected = Util.deepCopy(EXPECTED);
+        let expected = deepCopy(EXPECTED);
         expected.e = undefined;
         let validator = new ResponseValidator();
         validator.input(RESPONSE).validate(rule);

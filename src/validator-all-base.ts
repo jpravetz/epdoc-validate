@@ -1,5 +1,5 @@
 import { ValidatorError } from './validator-error';
-import { IGenericObject } from '.';
+import { Dict } from 'epdoc-util';
 
 export class ValidatorAllBase {
   protected _parent?: ValidatorAllBase;
@@ -46,7 +46,7 @@ export class ValidatorAllBase {
     return this;
   }
 
-  public validate(rule: IGenericObject): this {
+  public validate(rule: Dict): this {
     throw new Error('Implemented by subclass');
   }
 }

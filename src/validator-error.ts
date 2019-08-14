@@ -1,4 +1,4 @@
-import { IGenericObject } from '.';
+import { Dict } from 'epdoc-util';
 
 export class ValidatorError {
   public key: string;
@@ -11,7 +11,7 @@ export class ValidatorError {
    * type of the property (eg. integer)
    * @param params - params to pass to translation string
    */
-  constructor(key: string, type: string, params: IGenericObject = {}) {
+  constructor(key: string, type: string, params: Dict = {}) {
     this.key = key;
     this.type = type;
     Object.assign(this, params);
