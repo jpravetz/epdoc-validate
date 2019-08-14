@@ -5,7 +5,7 @@ describe('input', () => {
   describe('boolean', () => {
     it('simple', () => {
       const RULE = { type: 'boolean', sanitize: true };
-      let changes = {};
+      let changes: Dict = {};
       let validator = new InputValidator(changes);
       validator
         .input('short')
