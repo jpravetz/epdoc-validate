@@ -179,7 +179,7 @@ set to `true` for all `type` values other than 'string' when using
 To build and watch
 
 ```sh
-npm run dev
+npm run build
 ```
 
 To run tests
@@ -187,6 +187,11 @@ To run tests
 ```sh
 npm test
 ```
+
+Note that js and map files are put in the dist folder, while declaration files
+are output to the root folder. Refer to [this blog
+post](https://v4.chriskrycho.com/2018/how-to-bundle-typescript-type-definitions.html)
+for details.
 
 To contribute, please install prettier globally and run prettier to format
 files. If using vscode, install the prettier extension, disable other
