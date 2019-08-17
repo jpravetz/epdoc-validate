@@ -1,11 +1,11 @@
+import { ValidatorBase } from './validator-base';
 import { ValidatorItem } from './validator-item';
-import { IGenericObject } from './lib/util';
-import { Validator } from './validator';
+import { Dict } from 'epdoc-util';
 
 export class ValidatorItemResponse extends ValidatorItem {
-  protected _changes?: IGenericObject;
+  protected _changes?: Dict;
 
-  constructor(value: any, parent?: Validator) {
+  constructor(value: any, parent?: ValidatorBase) {
     super(value, parent);
   }
 }

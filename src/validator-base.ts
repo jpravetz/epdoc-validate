@@ -1,5 +1,15 @@
+import { ValidatorRuleParams } from './validator-rule';
 import { ValidatorError } from './validator-error';
-import { IGenericObject } from './lib/util';
+import { Dict } from 'epdoc-util';
+import { ValidatorItem } from './validator-item';
+
+export type ValueCallback = (val: any) => any;
+
+export interface IValidator {
+  _itemValidator?: ValidatorItem;
+  input(val: any): this;
+  validate(rule: ValidatorRuleParams | ValidatorRuleParams[]): this;
+}
 
 export class ValidatorBase {
   protected _parent?: ValidatorBase;
@@ -46,7 +56,7 @@ export class ValidatorBase {
     return this;
   }
 
-  public validate(rule: IGenericObject): this {
+  public validate(rule: Dict): this {
     throw new Error('Implemented by subclass');
   }
 }

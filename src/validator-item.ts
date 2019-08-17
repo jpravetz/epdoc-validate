@@ -1,19 +1,18 @@
 import { ValidatorError } from './validator-error';
-import {
-  isBoolean,
-  isNumber,
-  isObject,
-  isRegExp,
-  isString,
-  isFunction,
-  isDate,
-  IGenericObject,
-  hasValue,
-  deepCopy
-} from './lib/util';
-
 import { ValidatorRule } from './validator-rule';
 import { ValidatorBase } from './validator-base';
+import {
+  isObject,
+  isString,
+  isFunction,
+  isNumber,
+  isBoolean,
+  hasValue,
+  Dict,
+  deepCopy,
+  isRegExp,
+  isDate
+} from 'epdoc-util';
 
 const REGEX = {
   string: /^(string)$/,
@@ -40,9 +39,8 @@ const APPLY_METHOD: { [key: string]: string } = {
 
 export class ValidatorItem extends ValidatorBase {
   protected _value: any;
-  protected _changes?: IGenericObject;
-  protected _refDoc?: IGenericObject;
-  protected _rule?: ValidatorRule;
+  protected _changes?: Dict;
+  protected _refDoc?: Dict;
 
   // track errors here for objects with properties, so we collect them all before failing
   protected _name?: string;
@@ -85,11 +83,11 @@ export class ValidatorItem extends ValidatorBase {
     return hasValue(this._value);
   }
 
-  set changes(val: IGenericObject) {
+  set changes(val: Dict) {
     this._changes = val;
   }
 
-  set refDoc(val: IGenericObject) {
+  set refDoc(val: Dict) {
     this._refDoc = val;
   }
 
@@ -451,7 +449,7 @@ export class ValidatorItem extends ValidatorBase {
       Object.keys(rule.properties).forEach(prop => {
         try {
           const item = new ValidatorItem(this._value[prop]);
-          item.name(prop).validate((rule.properties as IGenericObject)[prop]);
+          item.name(prop).validate((rule.properties as Dict)[prop]);
           if (item.hasErrors()) {
             errors = errors.concat(item.errors);
           } else if (item.output !== undefined) {

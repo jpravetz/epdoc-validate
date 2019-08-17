@@ -1,5 +1,5 @@
 import { ResponseValidator } from '../src/response-validator';
-import { GenericObject, deepCopy } from '../src/lib/util';
+import { deepCopy } from 'epdoc-util';
 
 describe('response', () => {
   describe('primitive', () => {

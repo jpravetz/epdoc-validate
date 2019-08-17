@@ -1,5 +1,10 @@
-import { IGenericObject } from './lib/util';
+import { Dict } from 'epdoc-util';
 
+/**
+ * Validator Error object, containing details regarding an error, but which is
+ * not a subclass of Error. One or more ValidatorError objects can be combined
+ * to create an Error.
+ */
 export class ValidatorError {
   public key: string;
   public type: string;
@@ -11,7 +16,7 @@ export class ValidatorError {
    * type of the property (eg. integer)
    * @param params - params to pass to translation string
    */
-  constructor(key: string, type: string, params: IGenericObject = {}) {
+  constructor(key: string, type: string, params: Dict = {}) {
     this.key = key;
     this.type = type;
     Object.assign(this, params);
@@ -21,8 +26,4 @@ export class ValidatorError {
     return this.toString();
   }
 
-  // public toString() {
-  //   const tr = 'validator.error.' + this.type;
-  //   return new Translator(tr).params(this).trIfExists();
-  // }
 }

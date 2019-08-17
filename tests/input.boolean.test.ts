@@ -1,11 +1,11 @@
-import { GenericObject } from '../src/lib/util';
 import { InputValidator } from '../src/input-validator';
+import { Dict } from 'epdoc-util';
 
 describe('input', () => {
   describe('boolean', () => {
     it('simple', () => {
       const RULE = { type: 'boolean', sanitize: true };
-      let changes: GenericObject = {};
+      let changes: Dict = {};
       let validator = new InputValidator(changes);
       validator
         .input('short')

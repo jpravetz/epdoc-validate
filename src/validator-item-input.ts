@@ -1,6 +1,6 @@
+import { ValueCallback } from './validator-base';
 import { ValidatorItem } from './validator-item';
-import { Callback, hasValue, isString, isDate, isArray } from './lib/util';
-import { isFunction, isObject } from 'util';
+import { isString, hasValue, isDate, isObject, isArray, isFunction } from 'epdoc-util';
 
 function asString(val: any): string {
   if (isString(val)) {
@@ -30,9 +30,9 @@ export class ValidatorItemInput extends ValidatorItem {
    * @param fnFromData - If set to null then does not cast value to a string. If
    * a function then calls the function with value.
    */
-  constructor(value: any, fnFromData?: Callback) {
+  constructor(value: any, fnFromData?: ValueCallback) {
     if (isFunction(fnFromData)) {
-      value = (fnFromData as Callback)(value);
+      value = (fnFromData as ValueCallback)(value);
     } else if (fnFromData === undefined) {
       value = asString(value);
     }

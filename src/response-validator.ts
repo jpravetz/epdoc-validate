@@ -1,9 +1,10 @@
 import { ValidatorItemResponse } from './validator-item-response';
-import { Validator } from './validator';
-import { ValidatorRule } from './validator-rule';
+import { ValidatorBase, IValidator } from './validator-base';
+import { ValidatorRuleParams, ValidatorRule } from './validator-rule';
 import { ValidatorItem } from './validator-item';
 
-export class ResponseValidator extends Validator {
+export class ResponseValidator extends ValidatorBase implements IValidator {
+  _itemValidator?: ValidatorItem;
   protected _result: any;
 
   constructor() {
@@ -15,9 +16,15 @@ export class ResponseValidator extends Validator {
     return this;
   }
 
-  public validate(rule: ValidatorRule): this {
+  public validate(rule: ValidatorRuleParams | ValidatorRuleParams[]): this {
+    if (Array.isArray(rule)) {
+      throw new Error(
+        'ResponseValidator validate method can only be called with a single rule'
+      );
+    }
+    const validatorRule = new ValidatorRule(rule);
     const itemValidator = this._itemValidator as ValidatorItem;
-    itemValidator.validate(rule);
+    itemValidator.validate(validatorRule);
     this.output = itemValidator.output;
     if (itemValidator.hasErrors()) {
       this.addErrors(itemValidator.errors);

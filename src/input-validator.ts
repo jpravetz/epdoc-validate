@@ -1,11 +1,11 @@
-import { IGenericObject, Callback, deepEquals } from './lib/util';
-import { Validator } from './validator';
+import { ValidatorBase, IValidator, ValueCallback } from './validator-base';
 import { ValidatorItemInput } from './validator-item-input';
-import { ValidatorRule, IValidatorRuleParams } from './validator-rule';
+import { ValidatorRule, ValidatorRuleParams } from './validator-rule';
 import { ValidatorItem } from './validator-item';
+import { Dict, deepEquals } from 'epdoc-util';
 
 /**
- * Intended for the purpose of gathering values from UI, comparing them against
+ * Intended for the purpose of gathering values from UI,  dcomparing them against
  * an existing document, then adding the changed value to a changes object. For
  * this reason, this should probably not be used for nested objects that need to
  * be compared.
@@ -14,15 +14,16 @@ import { ValidatorItem } from './validator-item';
  * are valid, they are added to changes. But if a reference doc is specified,
  * they are only added if there is a diff to the reference doc.
  */
-export class InputValidator extends Validator {
-  protected _changes: IGenericObject;
-  protected _refDoc?: IGenericObject;
+export class InputValidator extends ValidatorBase implements IValidator {
+  _itemValidator?: ValidatorItem;
+  protected _changes: Dict;
+  protected _refDoc?: Dict;
   protected _name?: string;
-  protected _rule?: IValidatorRuleParams;
 
-  constructor(changes: IGenericObject = {}) {
+  constructor(changes: Dict = {}) {
     super();
     this._changes = changes;
+    this._errors;
   }
 
   public clear() {
@@ -46,35 +47,31 @@ export class InputValidator extends Validator {
    * on changes if it is different from the reference's value
    * @param {BaseModel} doc
    */
-  public reference(ref: IGenericObject | undefined): this {
+  public reference(ref: Dict | undefined): this {
     this._refDoc = ref;
     return this;
   }
 
-  get ref(): IGenericObject | undefined {
-    return this._refDoc as IGenericObject;
+  get ref(): Dict | undefined {
+    return this._refDoc as Dict;
   }
 
-  get changes(): IGenericObject {
+  get changes(): Dict {
     return this._changes;
   }
 
-  public input(val: any, fnFromData?: Callback): this {
+  public input(val: any, fnFromData?: ValueCallback): this {
     this._itemValidator = new ValidatorItemInput(val, fnFromData);
     this.applyChainVariables();
     this._itemValidator.changes = this._changes;
-    this._itemValidator.refDoc = this._refDoc as IGenericObject;
+    this._itemValidator.refDoc = this._refDoc as Dict;
     return this;
   }
 
-  public validate(rule?: any): this {
-    if (rule) {
-      this._rule = rule;
-    }
+  public validate(rule: ValidatorRuleParams | ValidatorRuleParams[]): this {
     this.applyChainVariables();
 
-    const rules = Array.isArray(this._rule) ? this._rule : [this._rule];
-    this._rule = undefined;
+    const rules: ValidatorRuleParams[] = Array.isArray(rule) ? rule : [rule];
     let passed = false;
     for (let idx = 0; idx < rules.length && !passed; ++idx) {
       const validatorRule = new ValidatorRule(rules[idx]);
@@ -88,16 +85,15 @@ export class InputValidator extends Validator {
         if (
           !deepEquals(
             (this._itemValidator as ValidatorItem).output,
-            (this._refDoc as IGenericObject)[this._name as string]
+            (this._refDoc as Dict)[this._name as string]
           )
         ) {
-          (this._changes as IGenericObject)[this._name as string] = (this
+          (this._changes as Dict)[this._name as string] = (this
             ._itemValidator as ValidatorItem).output;
         }
       } else {
         const name: string = (this._itemValidator as ValidatorItem).getName() as string;
-        (this._changes as IGenericObject)[name] = (this
-          ._itemValidator as ValidatorItem).output;
+        (this._changes as Dict)[name] = (this._itemValidator as ValidatorItem).output;
       }
     } else {
       this.addErrors((this._itemValidator as ValidatorItem).errors);
