@@ -1,6 +1,6 @@
 {
   "name": "epdoc-validate",
-  "version": "1.0.2-beta.2",
+  "version": "1.0.2-beta.3",
   "main": "dist/src/index.js",
   "types": "dist/src/index.d.ts",
   "umd:main": "dist/src/index.umd.js",
@@ -11,7 +11,6 @@
   "scripts": {
     "clean": "rm -rf dist coverage",
     "build": "tsc",
-    "dev": "microbundle watch",
     "watch": "jest --watch",
     "test": "jest --runInBand",
     "coverage": "jest --coverage --runInBand --verbose",
@@ -39,6 +38,6 @@
     "typescript": "^3.5.3"
   },
   "dependencies": {
-    "epdoc-util": "file:../../epdoc/epdoc-util"
+    "epdoc-util": "jpravetz/epdoc-util"
   }
 }
