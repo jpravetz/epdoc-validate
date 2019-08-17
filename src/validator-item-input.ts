@@ -1,5 +1,5 @@
+import { ValueCallback } from './validator-base';
 import { ValidatorItem } from './validator-item';
-import { ValueCallback } from './declarations';
 import { isString, hasValue, isDate, isObject, isArray, isFunction } from 'epdoc-util';
 
 function asString(val: any): string {

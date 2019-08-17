@@ -37,11 +37,8 @@
     "src/validator-item-input.ts",
     "src/validator-item-response.ts",
     "src/validator-error.ts",
-    "src/validator-factory.ts",
     "src/validator-base.ts",
-    "src/validator-all-base.ts",
     "src/response-validator.ts",
-    "src/input-validator.ts",
-    "src/declarations.ts"
+    "src/input-validator.ts"
   ]
 }

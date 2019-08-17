@@ -1,5 +1,5 @@
-import { ValidatorItem } from './validator-item';
 import { ValidatorBase } from './validator-base';
+import { ValidatorItem } from './validator-item';
 import { Dict } from 'epdoc-util';
 
 export class ValidatorItemResponse extends ValidatorItem {

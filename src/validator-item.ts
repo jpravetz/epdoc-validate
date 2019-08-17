@@ -1,6 +1,6 @@
 import { ValidatorError } from './validator-error';
 import { ValidatorRule } from './validator-rule';
-import { ValidatorAllBase } from './validator-all-base';
+import { ValidatorBase } from './validator-base';
 import {
   isObject,
   isString,
@@ -37,7 +37,7 @@ const APPLY_METHOD: { [key: string]: string } = {
   array: 'arrayApply'
 };
 
-export class ValidatorItem extends ValidatorAllBase {
+export class ValidatorItem extends ValidatorBase {
   protected _value: any;
   protected _changes?: Dict;
   protected _refDoc?: Dict;
@@ -46,7 +46,7 @@ export class ValidatorItem extends ValidatorAllBase {
   protected _name?: string;
   protected _label?: string;
 
-  constructor(value: any, parent?: ValidatorAllBase) {
+  constructor(value: any, parent?: ValidatorBase) {
     super(parent);
     this._value = value;
   }

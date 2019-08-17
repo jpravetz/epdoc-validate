@@ -1,5 +1,10 @@
 import { Dict } from 'epdoc-util';
 
+/**
+ * Validator Error object, containing details regarding an error, but which is
+ * not a subclass of Error. One or more ValidatorError objects can be combined
+ * to create an Error.
+ */
 export class ValidatorError {
   public key: string;
   public type: string;
@@ -21,8 +26,4 @@ export class ValidatorError {
     return this.toString();
   }
 
-  // public toString() {
-  //   const tr = 'validator.error.' + this.type;
-  //   return new Translator(tr).params(this).trIfExists();
-  // }
 }

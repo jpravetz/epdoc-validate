@@ -1,10 +1,20 @@
+import { ValueCallback } from './validator-base';
 import { isObject, isString, isNonEmptyString, Dict } from 'epdoc-util';
-import { IValidatorRuleParams, ValueCallback, ValidatorCallback } from './declarations';
 
-export interface IValidatorRuleProperties {
-  [key: string]: IValidatorRuleParams;
+/**
+ * Callback to process a value. This function signature is used by the pattern,
+ * sanitize and fromView callbacks.
+ */
+export type ValidatorCallback = (val: any, rule: ValidatorRule) => any;
+
+export interface ValidatorRuleProps {
+  [key: string]: ValidatorRuleParams;
 }
-export interface IValidatorRuleParams {
+
+/**
+ * Parameters to validate a value.
+ */
+export type ValidatorRuleParams = {
   name?: string;
   label?: string;
   type: string;
@@ -14,14 +24,18 @@ export interface IValidatorRuleParams {
   readonly min?: number;
   readonly max?: number;
   readonly sanitize?: boolean | string | ValidatorCallback;
-  required?: boolean | IValidatorRuleProperties;
-  optional?: boolean | IValidatorRuleProperties;
+  required?: boolean | ValidatorRuleProps;
+  optional?: boolean | ValidatorRuleProps;
   strict?: boolean;
-  properties?: IValidatorRuleProperties;
-  arrayType?: string; // if an array, the entries must be of this type
-  appendToArray?: boolean; // for arrays
-  fromView?: ValueCallback; // hook to allow value to be manipulated, eg converting 0/1 to false/true XXX use sanitize instead
-}
+  // For objects, a list of properties that the object may contain
+  properties?: ValidatorRuleProps;
+  // if an array, and arrayType is specified, the entries must be of this type
+  arrayType?: string;
+  // for arrays
+  appendToArray?: boolean;
+  // hook to allow value to be manipulated, eg converting 0/1 to false/true XXX use sanitize instead
+  fromView?: ValueCallback;
+};
 
 const FORMAT_LIBRARY = {
   email: /^(?:[a-zA-Z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-zA-Z0-9!#$%&'*+/=?^_`{|}~-]+)*|"(?:[\x01-\x08\x0b\x0c\x0e-\x1f\x21\x23-\x5b\x5d-\x7f]|\\[\x01-\x09\x0b\x0c\x0e-\x7f])*")@(?:(?:[a-zA-Z0-9](?:[a-zA-Z0-9-]*[a-zA-Z0-9])?\.)+[a-zA-Z0-9](?:[a-zA-Z0-9-]*[a-zA-Z0-9])?|\[(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?|[a-zA-Z0-9-]*[a-zA-Z0-9]:(?:[\x01-\x08\x0b\x0c\x0e-\x1f\x21-\x5a\x53-\x7f]|\\[\x01-\x09\x0b\x0c\x0e-\x7f])+)\])$/,
@@ -35,7 +49,7 @@ interface IValidatorRuleParamHack {
   [index: string]: any;
 }
 
-const RULE_LIBRARY: { [key: string]: IValidatorRuleParams } = {
+const RULE_LIBRARY: { [key: string]: ValidatorRuleParams } = {
   url: { type: 'string', pattern: /^https?:\/\// },
   email: {
     type: 'string',
@@ -122,9 +136,9 @@ export class ValidatorRule {
    * as a push
    *
    */
-  constructor(rule: IValidatorRuleParams | string) {
+  constructor(rule: ValidatorRuleParams | string) {
     if (isObject(rule)) {
-      const r = rule as IValidatorRuleParams;
+      const r = rule as ValidatorRuleParams;
       Object.assign(this, r);
       if (isString(r.format) && RULE_LIBRARY[r.format as string]) {
         Object.assign(this, RULE_LIBRARY[r.format as string]);
@@ -166,10 +180,10 @@ export class ValidatorRule {
    * @param {Object} rule - Generic object potentially with 'properties',
    * 'required' and 'optional' dictionaries
    */
-  private _recurse(rule: IValidatorRuleParams): this {
+  private _recurse(rule: ValidatorRuleParams): this {
     const props: ValidatorRule[] = [];
     if (isObject(rule.properties)) {
-      const p = rule.properties as { [key: string]: IValidatorRuleParams };
+      const p = rule.properties as { [key: string]: ValidatorRuleParams };
       Object.keys(p).forEach(key => {
         const subRule = new ValidatorRule(p[key]);
         props.push(subRule);

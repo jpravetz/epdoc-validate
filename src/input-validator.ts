@@ -1,8 +1,7 @@
-import { ValidatorBase } from './validator-base';
+import { ValidatorBase, IValidator, ValueCallback } from './validator-base';
 import { ValidatorItemInput } from './validator-item-input';
-import { ValidatorRule } from './validator-rule';
+import { ValidatorRule, ValidatorRuleParams } from './validator-rule';
 import { ValidatorItem } from './validator-item';
-import { ValueCallback, IValidatorRuleParams } from './declarations';
 import { Dict, deepEquals } from 'epdoc-util';
 
 /**
@@ -15,7 +14,8 @@ import { Dict, deepEquals } from 'epdoc-util';
  * are valid, they are added to changes. But if a reference doc is specified,
  * they are only added if there is a diff to the reference doc.
  */
-export class InputValidator extends ValidatorBase {
+export class InputValidator extends ValidatorBase implements IValidator {
+  _itemValidator?: ValidatorItem;
   protected _changes: Dict;
   protected _refDoc?: Dict;
   protected _name?: string;
@@ -23,6 +23,7 @@ export class InputValidator extends ValidatorBase {
   constructor(changes: Dict = {}) {
     super();
     this._changes = changes;
+    this._errors;
   }
 
   public clear() {
@@ -67,10 +68,10 @@ export class InputValidator extends ValidatorBase {
     return this;
   }
 
-  public validate(rule: IValidatorRuleParams | IValidatorRuleParams[]): this {
+  public validate(rule: ValidatorRuleParams | ValidatorRuleParams[]): this {
     this.applyChainVariables();
 
-    const rules: IValidatorRuleParams[] = Array.isArray(rule) ? rule : [rule];
+    const rules: ValidatorRuleParams[] = Array.isArray(rule) ? rule : [rule];
     let passed = false;
     for (let idx = 0; idx < rules.length && !passed; ++idx) {
       const validatorRule = new ValidatorRule(rules[idx]);
