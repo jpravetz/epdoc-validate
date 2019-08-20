@@ -1,16 +1,29 @@
+import { ValidatorType } from './../src/validator-rule';
 import { InputValidator } from '../src/input-validator';
 import { Dict } from 'epdoc-util';
 
 describe('input', () => {
   describe('number', () => {
     const RULE = {
-      number: { type: 'number', min: 5, max: 10.3 },
-      integer: { type: 'integer', min: 5, max: 10 },
-      integer1: { type: 'integer', min: 5, max: 100, optional: true, strict: true },
-      integer2: { type: 'integer', min: 5, max: 100, strict: true },
-      integer3: { type: 'integer', min: 5, max: 100, strict: true, required: true },
+      number: { type: ValidatorType.number, min: 5, max: 10.3 },
+      integer: { type: ValidatorType.integer, min: 5, max: 10 },
+      integer1: {
+        type: ValidatorType.integer,
+        min: 5,
+        max: 100,
+        optional: true,
+        strict: true
+      },
+      integer2: { type: ValidatorType.integer, min: 5, max: 100, strict: true },
+      integer3: {
+        type: ValidatorType.integer,
+        min: 5,
+        max: 100,
+        strict: true,
+        required: true
+      },
       number5: {
-        type: 'number',
+        type: ValidatorType.number,
         min: 5.2,
         max: 100,
         strict: true,
@@ -43,7 +56,7 @@ describe('input', () => {
       expect(validator.errors[0]).toEqual({
         key: 'a',
         type: 'max',
-        max: RULE.number.max
+        params: { max: RULE.number.max }
       });
       expect(changes.a).toBeUndefined();
     });
@@ -61,7 +74,7 @@ describe('input', () => {
       expect(validator.errors[0]).toEqual({
         key: 'a',
         type: 'min',
-        min: RULE.number.min
+        params: { min: RULE.number.min }
       });
       expect(changes.a).toBeUndefined();
     });
@@ -109,7 +122,7 @@ describe('input', () => {
         expect(validator.errors[0]).toEqual({
           key: 'a',
           type: 'min',
-          min: RULE.integer.min
+          params: { min: RULE.integer.min }
         });
         expect(changes.a).toBeUndefined();
       });

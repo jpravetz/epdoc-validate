@@ -11,13 +11,25 @@ export interface ValidatorRuleProps {
   [key: string]: ValidatorRuleParams;
 }
 
+export enum ValidatorType {
+  string = 'string',
+  number = 'number',
+  boolean = 'boolean',
+  null = 'null',
+  object = 'object',
+  array = 'array',
+  date = 'date',
+  any = 'any',
+  integer = 'integer'
+}
+
 /**
  * Parameters to validate a value.
  */
 export type ValidatorRuleParams = {
   name?: string;
   label?: string;
-  type: string;
+  type: ValidatorType;
   format?: string;
   readonly pattern?: RegExp | ValidatorCallback;
   readonly default?: any;
@@ -50,39 +62,39 @@ interface IValidatorRuleParamHack {
 }
 
 const RULE_LIBRARY: { [key: string]: ValidatorRuleParams } = {
-  url: { type: 'string', pattern: /^https?:\/\// },
+  url: { type: ValidatorType.string, pattern: /^https?:\/\// },
   email: {
-    type: 'string',
+    type: ValidatorType.string,
     pattern: FORMAT_LIBRARY.email,
     sanitize: (v: any) => {
       return String(v); // v.toLowerCase();
     }
   },
-  dimension: { type: 'string', pattern: FORMAT_LIBRARY.dimension },
-  aspect: { type: 'string', pattern: /^\d+:\d+$/ },
-  title: { type: 'string', pattern: /^.+$/ },
-  filename: { type: 'string', pattern: FORMAT_LIBRARY.filename },
-  fullname: { type: 'string', pattern: /^.+$/ },
-  company: { type: 'string', pattern: /^.+$/ },
-  subject: { type: 'string', pattern: /^.+$/ },
-  description: { type: 'string', pattern: /^.+$/ },
-  password: { type: 'string', pattern: FORMAT_LIBRARY.password },
-  label: { type: 'string', pattern: /^[a-zA-Z\-\.\s]+$/ },
-  username: { type: 'string', pattern: /^[a-z0-9]{2,}$/ },
-  interaction: { type: 'string', pattern: /^(none|url|clickplay)$/ },
-  globalPerm: { type: 'string', pattern: FORMAT_LIBRARY.globalPerm },
-  streamStatus: { type: 'string', pattern: /^(upcoming|live|completed)$/ },
-  usertoken: { type: 'string', pattern: /^.*$/ },
-  externalId: { type: 'string', pattern: /^.*$/ },
-  posInt: { type: 'string', pattern: /^\d+$/, sanitize: 'integer' },
-  posIntAsString: { type: 'string', pattern: /^\d+$/, sanitize: 'string' },
-  signedInt: { type: 'string', pattern: /^(\+|-)?\d+$/, sanitize: 'integer' }
+  dimension: { type: ValidatorType.string, pattern: FORMAT_LIBRARY.dimension },
+  aspect: { type: ValidatorType.string, pattern: /^\d+:\d+$/ },
+  title: { type: ValidatorType.string, pattern: /^.+$/ },
+  filename: { type: ValidatorType.string, pattern: FORMAT_LIBRARY.filename },
+  fullname: { type: ValidatorType.string, pattern: /^.+$/ },
+  company: { type: ValidatorType.string, pattern: /^.+$/ },
+  subject: { type: ValidatorType.string, pattern: /^.+$/ },
+  description: { type: ValidatorType.string, pattern: /^.+$/ },
+  password: { type: ValidatorType.string, pattern: FORMAT_LIBRARY.password },
+  label: { type: ValidatorType.string, pattern: /^[a-zA-Z\-\.\s]+$/ },
+  username: { type: ValidatorType.string, pattern: /^[a-z0-9]{2,}$/ },
+  interaction: { type: ValidatorType.string, pattern: /^(none|url|clickplay)$/ },
+  globalPerm: { type: ValidatorType.string, pattern: FORMAT_LIBRARY.globalPerm },
+  streamStatus: { type: ValidatorType.string, pattern: /^(upcoming|live|completed)$/ },
+  usertoken: { type: ValidatorType.string, pattern: /^.*$/ },
+  externalId: { type: ValidatorType.string, pattern: /^.*$/ },
+  posInt: { type: ValidatorType.string, pattern: /^\d+$/, sanitize: 'integer' },
+  posIntAsString: { type: ValidatorType.string, pattern: /^\d+$/, sanitize: 'string' },
+  signedInt: { type: ValidatorType.string, pattern: /^(\+|-)?\d+$/, sanitize: 'integer' }
 };
 
 export class ValidatorRule {
   public name?: string;
   public label?: string;
-  public type: string = 'string';
+  public type: ValidatorType = ValidatorType.string;
   public pattern?: any;
   public default?: any;
   public min?: number;

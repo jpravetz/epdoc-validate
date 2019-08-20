@@ -1,10 +1,11 @@
+import { ValidatorType } from './../src/validator-rule';
 import { InputValidator } from '../src/input-validator';
 import { Dict } from 'epdoc-util';
 
 describe('input', () => {
   describe('date', () => {
     it('sanitize', () => {
-      const RULE = { type: 'date', sanitize: true };
+      const RULE = { type: ValidatorType.date, sanitize: true };
       let i0 = new Date(2001, 1);
       let i1 = '2019-07-26T19:34:03.258Z';
       let changes: Dict = {};

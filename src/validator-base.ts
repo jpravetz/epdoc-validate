@@ -1,5 +1,5 @@
+import { ValidationErrorStringCallback } from './validator-base';
 import { ValidatorRuleParams } from './validator-rule';
-import { ValidatorError } from './validator-error';
 import { Dict } from 'epdoc-util';
 import { ValidatorItem } from './validator-item';
 
@@ -11,10 +11,40 @@ export interface IValidator {
   validate(rule: ValidatorRuleParams | ValidatorRuleParams[]): this;
 }
 
+export enum ValidatorErrorType {
+  invalid = 'invalid',
+  missing = 'missing',
+  missingOrInvalid = 'missing or invalid',
+  notAllowed = 'notAllowed',
+  min = 'min',
+  lenMin = 'lenMin',
+  max = 'max',
+  lenMax = 'lenMax',
+  dateMin = 'dateMin',
+  dateMax = 'dateMax'
+}
+
+export type ValidatorErrorItem = {
+  // Name of attribute that caused the error. This will be the name shown to the
+  // user, so if translation or substitution needs to take place, it needs to be
+  // done beforehand.
+  key: string;
+  // Type of error. Useful for translation lookup.
+  type: ValidatorErrorType;
+  // Params that can be passed to string translator
+  params?: Dict;
+};
+
+export type ValidationErrorStringCallback = (
+  key: string,
+  type: ValidatorErrorType,
+  params: Dict
+) => string;
+
 export class ValidatorBase {
   protected _parent?: ValidatorBase;
   protected _result?: any;
-  protected _errors: ValidatorError[] = [];
+  protected _errors: ValidatorErrorItem[] = [];
 
   constructor(parent?: ValidatorBase) {
     this._parent = parent;
@@ -46,12 +76,12 @@ export class ValidatorBase {
     return this._errors.length ? true : false;
   }
 
-  public addError(err: ValidatorError): this {
-    this._errors.push(err);
-    return this;
-  }
+  // public addError(err: ValidatorErrorItem): this {
+  //   this._errors.push(err);
+  //   return this;
+  // }
 
-  public addErrors(errs: ValidatorError[]): this {
+  public addErrors(errs: ValidatorErrorItem[]): this {
     this._errors = this._errors.concat(errs);
     return this;
   }

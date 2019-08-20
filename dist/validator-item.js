@@ -1,6 +1,5 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-const validator_error_1 = require("./validator-error");
 const validator_base_1 = require("./validator-base");
 const epdoc_util_1 = require("epdoc-util");
 const REGEX = {
@@ -41,7 +40,7 @@ class ValidatorItem extends validator_base_1.ValidatorBase {
         this._label = val;
     }
     get label() {
-        return this._label;
+        return this._label ? this._label : this._name ? this._name : '?';
     }
     get errors() {
         return this._errors;
@@ -57,6 +56,11 @@ class ValidatorItem extends validator_base_1.ValidatorBase {
     }
     set refDoc(val) {
         this._refDoc = val;
+    }
+    addError(type, params) {
+        let err = { key: this.label, type: type, params: params };
+        this._errors.push(err);
+        return this;
     }
     validate(rule) {
         if (!this._name && rule.name) {
@@ -77,13 +81,11 @@ class ValidatorItem extends validator_base_1.ValidatorBase {
                 return this;
             }
             else if (rule.required) {
-                this._errors.push(new validator_error_1.ValidatorError(this._label, 'missing'));
-                return this;
+                return this.addError(validator_base_1.ValidatorErrorType.missing);
             }
         }
         else if (rule.strict && !rule.optional && !rule.required) {
-            this._errors.push(new validator_error_1.ValidatorError(this._label, 'notAllowed'));
-            return this;
+            return this.addError(validator_base_1.ValidatorErrorType.notAllowed);
         }
         const methodName = APPLY_METHOD[rule.type];
         if (!methodName || !epdoc_util_1.isFunction(this[methodName])) {
@@ -117,7 +119,7 @@ class ValidatorItem extends validator_base_1.ValidatorBase {
             return this.setResult(rule.default(val, rule));
         }
         if (rule.required) {
-            throw new validator_error_1.ValidatorError(this.label, 'missing or invalid');
+            return this.addError(validator_base_1.ValidatorErrorType.missingOrInvalid);
         }
         return this;
     }
@@ -155,9 +157,9 @@ class ValidatorItem extends validator_base_1.ValidatorBase {
             return this.setResult(rule.default(val, rule));
         }
         if (rule.required && val) {
-            throw new validator_error_1.ValidatorError(this.label, 'missing');
+            return this.addError(validator_base_1.ValidatorErrorType.missing);
         }
-        throw new validator_error_1.ValidatorError(this.label, 'invalid');
+        return this.addError(validator_base_1.ValidatorErrorType.invalid);
     }
     stringApply(val, rule) {
         if (epdoc_util_1.isString(val)) {
@@ -179,19 +181,19 @@ class ValidatorItem extends validator_base_1.ValidatorBase {
             return this.applyStringLengthTests(String(val), rule);
         }
         if (rule.required) {
-            throw new validator_error_1.ValidatorError(this.label, 'missing');
+            return this.addError(validator_base_1.ValidatorErrorType.missing);
         }
         return this;
     }
     applyStringLengthTests(val, rule) {
         if (epdoc_util_1.isRegExp(rule.pattern)) {
             if (!rule.pattern.test(val)) {
-                throw new validator_error_1.ValidatorError(this.label, 'invalid');
+                return this.addError(validator_base_1.ValidatorErrorType.invalid);
             }
         }
         if (epdoc_util_1.isFunction(rule.pattern)) {
             if (!rule.pattern(val, rule)) {
-                throw new validator_error_1.ValidatorError(this.label, 'invalid');
+                return this.addError(validator_base_1.ValidatorErrorType.invalid);
             }
         }
         if (epdoc_util_1.isNumber(rule.min) && val.length < rule.min) {
@@ -201,7 +203,7 @@ class ValidatorItem extends validator_base_1.ValidatorBase {
             if (epdoc_util_1.isFunction(rule.default)) {
                 return this.setResult(rule.default(val, rule, 'min'));
             }
-            throw new validator_error_1.ValidatorError(this.label, 'lenMin', { min: rule.min });
+            return this.addError(validator_base_1.ValidatorErrorType.lenMin, { min: rule.min });
         }
         if (epdoc_util_1.isNumber(rule.max) && val.length > rule.max) {
             if (epdoc_util_1.isString(rule.default)) {
@@ -210,7 +212,7 @@ class ValidatorItem extends validator_base_1.ValidatorBase {
             if (epdoc_util_1.isFunction(rule.default)) {
                 return this.setResult(rule.default(val, rule, 'max'));
             }
-            throw new validator_error_1.ValidatorError(this.label, 'lenMax', { max: rule.max });
+            return this.addError(validator_base_1.ValidatorErrorType.lenMax, { max: rule.max });
         }
         return this.setResult(val);
     }
@@ -231,7 +233,7 @@ class ValidatorItem extends validator_base_1.ValidatorBase {
                     return this.applyNumberLimitTests(val, rule);
                 }
                 if (Math.round(val) !== val) {
-                    throw new validator_error_1.ValidatorError(this.label, 'invalid');
+                    return this.addError(validator_base_1.ValidatorErrorType.invalid);
                 }
             }
             return this.applyNumberLimitTests(val, rule);
@@ -244,7 +246,7 @@ class ValidatorItem extends validator_base_1.ValidatorBase {
                         return this.setResult(this.getDefault(rule));
                     }
                     if (rule.required) {
-                        throw new validator_error_1.ValidatorError(this.label, 'missing or invalid');
+                        return this.addError(validator_base_1.ValidatorErrorType.missingOrInvalid);
                     }
                 }
                 return this.applyNumberLimitTests(valAsInt, rule);
@@ -256,7 +258,7 @@ class ValidatorItem extends validator_base_1.ValidatorBase {
                     return this;
                 }
                 if (rule.required) {
-                    throw new validator_error_1.ValidatorError(this.label, 'missing or invalid');
+                    return this.addError(validator_base_1.ValidatorErrorType.missingOrInvalid);
                 }
             }
             return this.applyNumberLimitTests(valAsFloat, rule);
@@ -265,7 +267,7 @@ class ValidatorItem extends validator_base_1.ValidatorBase {
             return this.setResult(this.getDefault(rule));
         }
         if (rule.required) {
-            throw new validator_error_1.ValidatorError(this.label, 'missing or invalid');
+            return this.addError(validator_base_1.ValidatorErrorType.missingOrInvalid);
         }
         return this;
     }
@@ -277,7 +279,7 @@ class ValidatorItem extends validator_base_1.ValidatorBase {
             if (epdoc_util_1.isFunction(rule.default)) {
                 return this.setResult(rule.default(val, rule, 'min'));
             }
-            throw new validator_error_1.ValidatorError(this._label, 'min', { min: rule.min });
+            return this.addError(validator_base_1.ValidatorErrorType.min, { min: rule.min });
         }
         if (epdoc_util_1.isNumber(rule.max) && val > rule.max) {
             if (epdoc_util_1.isNumber(rule.default)) {
@@ -286,7 +288,7 @@ class ValidatorItem extends validator_base_1.ValidatorBase {
             if (epdoc_util_1.isFunction(rule.default)) {
                 return this.setResult(rule.default(val, rule, 'max'));
             }
-            throw new validator_error_1.ValidatorError(this._label, 'max', { max: rule.max });
+            return this.addError(validator_base_1.ValidatorErrorType.max, { max: rule.max });
         }
         return this.setResult(val);
     }
@@ -320,19 +322,19 @@ class ValidatorItem extends validator_base_1.ValidatorBase {
             return new Date(rule.default);
         }
         if (rule.required) {
-            throw new validator_error_1.ValidatorError(this.label, 'missing or invalid');
+            return this.addError(validator_base_1.ValidatorErrorType.missingOrInvalid);
         }
-        throw new validator_error_1.ValidatorError(this.label, 'invalid');
+        return this.addError(validator_base_1.ValidatorErrorType.invalid);
     }
     applyDateLimitTests(val, rule) {
         if (epdoc_util_1.hasValue(rule.min) && val < rule.min) {
             if (epdoc_util_1.isFunction(rule.default)) {
-                return this.setResult(rule.default(val, rule, 'min'));
+                return this.setResult(rule.default(val, rule, validator_base_1.ValidatorErrorType.min));
             }
             if (epdoc_util_1.hasValue(rule.default)) {
                 return this.setResult(new Date(rule.default));
             }
-            throw new validator_error_1.ValidatorError(this._label, 'dateMin', { min: rule.min });
+            return this.addError(validator_base_1.ValidatorErrorType.dateMin, { min: rule.min });
         }
         if (epdoc_util_1.hasValue(rule.max) && val > rule.max) {
             if (epdoc_util_1.isFunction(rule.default)) {
@@ -341,7 +343,7 @@ class ValidatorItem extends validator_base_1.ValidatorBase {
             if (epdoc_util_1.hasValue(rule.default)) {
                 return this.setResult(new Date(rule.default));
             }
-            throw new validator_error_1.ValidatorError(this._label, 'dateMax', { max: rule.max });
+            return this.addError(validator_base_1.ValidatorErrorType.dateMax, { max: rule.max });
         }
         return this.setResult(val);
     }
@@ -355,7 +357,7 @@ class ValidatorItem extends validator_base_1.ValidatorBase {
             if (epdoc_util_1.isFunction(rule.sanitize)) {
                 return this.setResult(rule.sanitize(val, rule));
             }
-            throw new validator_error_1.ValidatorError(this.label, 'invalid');
+            return this.addError(validator_base_1.ValidatorErrorType.invalid);
         }
         if (epdoc_util_1.isFunction(rule.default)) {
             return this.setResult(rule.default(val, rule));
@@ -364,7 +366,7 @@ class ValidatorItem extends validator_base_1.ValidatorBase {
             return this.setResult(epdoc_util_1.deepCopy(rule.default));
         }
         if (rule.required) {
-            throw new validator_error_1.ValidatorError(this.label, 'missing');
+            return this.addError(validator_base_1.ValidatorErrorType.missing);
         }
         return this;
     }
@@ -376,6 +378,9 @@ class ValidatorItem extends validator_base_1.ValidatorBase {
                     const item = new ValidatorItem(this._value[prop]);
                     item.name(prop).validate(rule.properties[prop]);
                     if (item.hasErrors()) {
+                        item.errors.forEach(err => {
+                            err.key = [this.label, err.key].join('.');
+                        });
                         errors = errors.concat(item.errors);
                     }
                     else if (item.output !== undefined) {

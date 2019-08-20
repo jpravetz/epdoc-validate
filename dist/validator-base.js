@@ -1,5 +1,18 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+var ValidatorErrorType;
+(function (ValidatorErrorType) {
+    ValidatorErrorType["invalid"] = "invalid";
+    ValidatorErrorType["missing"] = "missing";
+    ValidatorErrorType["missingOrInvalid"] = "missing or invalid";
+    ValidatorErrorType["notAllowed"] = "notAllowed";
+    ValidatorErrorType["min"] = "min";
+    ValidatorErrorType["lenMin"] = "lenMin";
+    ValidatorErrorType["max"] = "max";
+    ValidatorErrorType["lenMax"] = "lenMax";
+    ValidatorErrorType["dateMin"] = "dateMin";
+    ValidatorErrorType["dateMax"] = "dateMax";
+})(ValidatorErrorType = exports.ValidatorErrorType || (exports.ValidatorErrorType = {}));
 class ValidatorBase {
     constructor(parent) {
         this._errors = [];
@@ -24,10 +37,6 @@ class ValidatorBase {
     }
     hasErrors() {
         return this._errors.length ? true : false;
-    }
-    addError(err) {
-        this._errors.push(err);
-        return this;
     }
     addErrors(errs) {
         this._errors = this._errors.concat(errs);

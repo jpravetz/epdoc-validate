@@ -1,8 +1,8 @@
 {
   "name": "epdoc-validate",
-  "version": "1.0.2-beta.4",
-  "main": "dist/src/index.js",
-  "types": "dist/src/index.d.ts",
+  "version": "1.0.2-beta.7",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
   "umd:main": "dist/src/index.umd.js",
   "module": "dist/src/index.mjs",
   "source": "src/index.ts",
@@ -10,7 +10,7 @@
   "private": true,
   "scripts": {
     "clean": "rm -rf *.d.ts dist coverage",
-    "build": "npm run ts:js && npm run ts:defs",
+    "build": "npm run ts:js",
     "test": "jest --runInBand",
     "coverage": "jest --coverage --runInBand --verbose",
     "prepare": "npm run build",
@@ -18,7 +18,7 @@
     "lint": "tslint -p tsconfig.json",
     "ts:js": "tsc",
     "ts:defs": "tsc --declaration --outDir . --emitDeclarationOnly",
-    "prepublishOnly": "npm run ts:js && npm run ts:defs",
+    "prepublishOnly": "npm run ts:js",
     "postpublish": "npm run clean"
   },
   "jest": {

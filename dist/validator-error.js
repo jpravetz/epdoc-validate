@@ -1,14 +1,14 @@
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-class ValidatorError {
-    constructor(key, type, params = {}) {
-        this.key = key;
-        this.type = type;
-        Object.assign(this, params);
-    }
-    get message() {
-        return this.toString();
-    }
+'use strict';
+Object.defineProperty(exports, '__esModule', { value: true });
+class ValidatorErrorItem {
+  constructor(key, type, params = {}) {
+    this.key = key;
+    this.type = type;
+    Object.assign(this, params);
+  }
+  get message() {
+    return this.toString();
+  }
 }
-exports.ValidatorError = ValidatorError;
+exports.ValidatorErrorItem = ValidatorErrorItem;
 //# sourceMappingURL=validator-error.js.map

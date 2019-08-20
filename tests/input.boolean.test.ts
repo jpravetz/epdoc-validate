@@ -1,10 +1,11 @@
+import { ValidatorType } from './../src/validator-rule';
 import { InputValidator } from '../src/input-validator';
 import { Dict } from 'epdoc-util';
 
 describe('input', () => {
   describe('boolean', () => {
     it('simple', () => {
-      const RULE = { type: 'boolean', sanitize: true };
+      const RULE = { type: ValidatorType.boolean, sanitize: true };
       let changes: Dict = {};
       let validator = new InputValidator(changes);
       validator

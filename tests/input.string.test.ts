@@ -1,11 +1,12 @@
+import { ValidatorType } from './../src/validator-rule';
 import { Dict } from 'epdoc-util';
 import { InputValidator } from '../src/input-validator';
 
 describe('input', () => {
   describe('string', () => {
     it('simple', () => {
-      const RULE1 = { type: 'string', min: 6, max: 10 };
-      const RULE2 = { type: 'string', min: 5, max: 100 };
+      const RULE1 = { type: ValidatorType.string, min: 6, max: 10 };
+      const RULE2 = { type: ValidatorType.string, min: 5, max: 100 };
       let i0 = 'short';
       let changes: Dict = {};
       let validator = new InputValidator(changes);
@@ -19,13 +20,17 @@ describe('input', () => {
         .validate(RULE2);
       expect(validator.hasErrors()).toBe(true);
       expect(validator.errors.length).toBe(1);
-      expect(validator.errors[0]).toEqual({ key: 'a', min: 6, type: 'lenMin' });
+      expect(validator.errors[0]).toEqual({
+        key: 'a',
+        params: { min: 6 },
+        type: 'lenMin'
+      });
       expect(changes.a).toBeUndefined();
       expect(changes.b).toBe(i0);
     });
 
     it('null', () => {
-      const RULE1 = [{ type: 'string' }];
+      const RULE1 = [{ type: ValidatorType.string }];
       let i0 = null;
       let i1 = 'a string ';
       let changes: Dict = {};
@@ -43,7 +48,7 @@ describe('input', () => {
       expect(changes.b).toBe(i1.trim());
     });
     it('email', () => {
-      const RULE = { type: 'string', format: 'email' };
+      const RULE = { type: ValidatorType.string, format: 'email' };
       let changes: Dict = {};
       let i0 = 'short';
       let i1 = 'bob@test.com';
@@ -63,7 +68,7 @@ describe('input', () => {
     });
 
     it('url', () => {
-      const RULE = { type: 'string', format: 'url' };
+      const RULE = { type: ValidatorType.string, format: 'url' };
       let changes: Dict = {};
       let i0 = 'http:/invalid.com';
       let i1 = 'http://valid.com';
@@ -83,7 +88,7 @@ describe('input', () => {
     });
 
     it('username', () => {
-      const RULE = { type: 'string', format: 'username' };
+      const RULE = { type: ValidatorType.string, format: 'username' };
       let changes: Dict = {};
       let i1 = 'validusername';
       let validator = new InputValidator(changes);

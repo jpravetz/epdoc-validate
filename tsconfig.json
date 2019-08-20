@@ -32,11 +32,11 @@
     "esModuleInterop": true /* Enables emit interoperability between CommonJS and ES Modules via creation of namespace objects for all imports. Implies 'allowSyntheticDefaultImports'. */
   },
   "files": [
+    "src/index.ts",
     "src/validator-rule.ts",
     "src/validator-item.ts",
     "src/validator-item-input.ts",
     "src/validator-item-response.ts",
-    "src/validator-error.ts",
     "src/validator-base.ts",
     "src/response-validator.ts",
     "src/input-validator.ts"

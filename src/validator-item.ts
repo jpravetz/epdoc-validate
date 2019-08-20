@@ -1,6 +1,5 @@
-import { ValidatorError } from './validator-error';
 import { ValidatorRule } from './validator-rule';
-import { ValidatorBase } from './validator-base';
+import { ValidatorBase, ValidatorErrorType, ValidatorErrorItem } from './validator-base';
 import {
   isObject,
   isString,
@@ -56,7 +55,7 @@ export class ValidatorItem extends ValidatorBase {
     return this;
   }
 
-  public getName(): string | undefined {
+  public getName() {
     return this._name;
   }
 
@@ -64,8 +63,8 @@ export class ValidatorItem extends ValidatorBase {
     this._label = val;
   }
 
-  get label() {
-    return this._label;
+  get label(): string {
+    return this._label ? this._label : this._name ? this._name : '?';
   }
 
   get errors() {
@@ -89,6 +88,12 @@ export class ValidatorItem extends ValidatorBase {
 
   set refDoc(val: Dict) {
     this._refDoc = val;
+  }
+
+  addError(type: ValidatorErrorType, params?: Dict) {
+    let err = { key: this.label, type: type, params: params };
+    this._errors.push(err);
+    return this;
   }
 
   /**
@@ -120,12 +125,10 @@ export class ValidatorItem extends ValidatorBase {
         this._result = rule.default;
         return this;
       } else if (rule.required) {
-        this._errors.push(new ValidatorError(this._label as string, 'missing'));
-        return this;
+        return this.addError(ValidatorErrorType.missing);
       }
     } else if (rule.strict && !rule.optional && !rule.required) {
-      this._errors.push(new ValidatorError(this._label as string, 'notAllowed'));
-      return this;
+      return this.addError(ValidatorErrorType.notAllowed);
     }
 
     // Now call a type-specific validator on the value
@@ -168,7 +171,7 @@ export class ValidatorItem extends ValidatorBase {
       return this.setResult(rule.default(val, rule));
     }
     if (rule.required) {
-      throw new ValidatorError(this.label as string, 'missing or invalid');
+      return this.addError(ValidatorErrorType.missingOrInvalid);
     }
     return this;
   }
@@ -212,9 +215,9 @@ export class ValidatorItem extends ValidatorBase {
       return this.setResult(rule.default(val, rule));
     }
     if (rule.required && val) {
-      throw new ValidatorError(this.label as string, 'missing');
+      return this.addError(ValidatorErrorType.missing);
     }
-    throw new ValidatorError(this.label as string, 'invalid');
+    return this.addError(ValidatorErrorType.invalid);
   }
 
   /**
@@ -241,7 +244,7 @@ export class ValidatorItem extends ValidatorBase {
       return this.applyStringLengthTests(String(val), rule);
     }
     if (rule.required) {
-      throw new ValidatorError(this.label as string, 'missing');
+      return this.addError(ValidatorErrorType.missing);
     }
     return this;
   }
@@ -249,12 +252,12 @@ export class ValidatorItem extends ValidatorBase {
   protected applyStringLengthTests(val: any, rule: ValidatorRule) {
     if (isRegExp(rule.pattern)) {
       if (!rule.pattern.test(val)) {
-        throw new ValidatorError(this.label as string, 'invalid');
+        return this.addError(ValidatorErrorType.invalid);
       }
     }
     if (isFunction(rule.pattern)) {
       if (!rule.pattern(val, rule)) {
-        throw new ValidatorError(this.label as string, 'invalid');
+        return this.addError(ValidatorErrorType.invalid);
       }
     }
     if (isNumber(rule.min) && val.length < (rule.min as number)) {
@@ -264,7 +267,7 @@ export class ValidatorItem extends ValidatorBase {
       if (isFunction(rule.default)) {
         return this.setResult(rule.default(val, rule, 'min'));
       }
-      throw new ValidatorError(this.label as string, 'lenMin', { min: rule.min });
+      return this.addError(ValidatorErrorType.lenMin, { min: rule.min });
     }
     if (isNumber(rule.max) && val.length > (rule.max as number)) {
       if (isString(rule.default)) {
@@ -273,7 +276,7 @@ export class ValidatorItem extends ValidatorBase {
       if (isFunction(rule.default)) {
         return this.setResult(rule.default(val, rule, 'max'));
       }
-      throw new ValidatorError(this.label as string, 'lenMax', { max: rule.max });
+      return this.addError(ValidatorErrorType.lenMax, { max: rule.max });
     }
     return this.setResult(val);
   }
@@ -301,7 +304,7 @@ export class ValidatorItem extends ValidatorBase {
           return this.applyNumberLimitTests(val, rule);
         }
         if (Math.round(val) !== val) {
-          throw new ValidatorError(this.label as string, 'invalid');
+          return this.addError(ValidatorErrorType.invalid);
         }
       }
       return this.applyNumberLimitTests(val, rule);
@@ -314,7 +317,7 @@ export class ValidatorItem extends ValidatorBase {
             return this.setResult(this.getDefault(rule));
           }
           if (rule.required) {
-            throw new ValidatorError(this.label as string, 'missing or invalid');
+            return this.addError(ValidatorErrorType.missingOrInvalid);
           }
         }
         return this.applyNumberLimitTests(valAsInt, rule);
@@ -326,7 +329,7 @@ export class ValidatorItem extends ValidatorBase {
           return this;
         }
         if (rule.required) {
-          throw new ValidatorError(this.label as string, 'missing or invalid');
+          return this.addError(ValidatorErrorType.missingOrInvalid);
         }
       }
       return this.applyNumberLimitTests(valAsFloat, rule);
@@ -335,7 +338,7 @@ export class ValidatorItem extends ValidatorBase {
       return this.setResult(this.getDefault(rule));
     }
     if (rule.required) {
-      throw new ValidatorError(this.label as string, 'missing or invalid');
+      return this.addError(ValidatorErrorType.missingOrInvalid);
     }
     return this;
   }
@@ -348,7 +351,7 @@ export class ValidatorItem extends ValidatorBase {
       if (isFunction(rule.default)) {
         return this.setResult(rule.default(val, rule, 'min'));
       }
-      throw new ValidatorError(this._label as string, 'min', { min: rule.min });
+      return this.addError(ValidatorErrorType.min, { min: rule.min });
     }
     if (isNumber(rule.max) && val > (rule.max as number)) {
       if (isNumber(rule.default)) {
@@ -357,7 +360,7 @@ export class ValidatorItem extends ValidatorBase {
       if (isFunction(rule.default)) {
         return this.setResult(rule.default(val, rule, 'max'));
       }
-      throw new ValidatorError(this._label as string, 'max', { max: rule.max });
+      return this.addError(ValidatorErrorType.max, { max: rule.max });
     }
     return this.setResult(val);
   }
@@ -392,20 +395,20 @@ export class ValidatorItem extends ValidatorBase {
       return new Date(rule.default);
     }
     if (rule.required) {
-      throw new ValidatorError(this.label as string, 'missing or invalid');
+      return this.addError(ValidatorErrorType.missingOrInvalid);
     }
-    throw new ValidatorError(this.label as string, 'invalid');
+    return this.addError(ValidatorErrorType.invalid);
   }
 
   protected applyDateLimitTests(val: any, rule: ValidatorRule) {
     if (hasValue(rule.min) && val < (rule.min as number)) {
       if (isFunction(rule.default)) {
-        return this.setResult(rule.default(val, rule, 'min'));
+        return this.setResult(rule.default(val, rule, ValidatorErrorType.min));
       }
       if (hasValue(rule.default)) {
         return this.setResult(new Date(rule.default));
       }
-      throw new ValidatorError(this._label as string, 'dateMin', { min: rule.min });
+      return this.addError(ValidatorErrorType.dateMin, { min: rule.min });
     }
     if (hasValue(rule.max) && val > (rule.max as number)) {
       if (isFunction(rule.default)) {
@@ -414,7 +417,7 @@ export class ValidatorItem extends ValidatorBase {
       if (hasValue(rule.default)) {
         return this.setResult(new Date(rule.default));
       }
-      throw new ValidatorError(this._label as string, 'dateMax', { max: rule.max });
+      return this.addError(ValidatorErrorType.dateMax, { max: rule.max });
     }
     return this.setResult(val);
   }
@@ -429,7 +432,7 @@ export class ValidatorItem extends ValidatorBase {
       if (isFunction(rule.sanitize)) {
         return this.setResult(rule.sanitize(val, rule));
       }
-      throw new ValidatorError(this.label as string, 'invalid');
+      return this.addError(ValidatorErrorType.invalid);
     }
     if (isFunction(rule.default)) {
       return this.setResult(rule.default(val, rule));
@@ -438,19 +441,22 @@ export class ValidatorItem extends ValidatorBase {
       return this.setResult(deepCopy(rule.default));
     }
     if (rule.required) {
-      throw new ValidatorError(this.label as string, 'missing');
+      return this.addError(ValidatorErrorType.missing);
     }
     return this;
   }
 
   protected propertiesApply(rule: ValidatorRule): this {
     if (rule.type === 'object' && rule.properties) {
-      let errors: ValidatorError[] = [];
+      let errors: ValidatorErrorItem[] = [];
       Object.keys(rule.properties).forEach(prop => {
         try {
           const item = new ValidatorItem(this._value[prop]);
           item.name(prop).validate((rule.properties as Dict)[prop]);
           if (item.hasErrors()) {
+            item.errors.forEach(err => {
+              err.key = [this.label, err.key].join('.');
+            });
             errors = errors.concat(item.errors);
           } else if (item.output !== undefined) {
             this._result[prop] = item.output;

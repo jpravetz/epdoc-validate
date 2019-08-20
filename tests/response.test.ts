@@ -1,3 +1,4 @@
+import { ValidatorType } from './../src/validator-rule';
 import { ResponseValidator } from '../src/response-validator';
 import { deepCopy } from 'epdoc-util';
 
@@ -6,7 +7,7 @@ describe('response', () => {
     describe('number', () => {
       it('number pass', () => {
         const RULE = {
-          type: 'number',
+          type: ValidatorType.number,
           min: 5,
           max: 10
         };
@@ -20,7 +21,7 @@ describe('response', () => {
 
       it('int', () => {
         const RULE = {
-          type: 'number',
+          type: ValidatorType.number,
           min: 5,
           max: 10
         };
@@ -37,14 +38,26 @@ describe('response', () => {
   describe('object', () => {
     describe('number', () => {
       const RULE = {
-        type: 'object',
+        type: ValidatorType.object,
         properties: {
-          a: { type: 'integer', min: 5, max: 10 },
-          b: { type: 'integer', min: 5, max: 100, optional: true, strict: true },
-          c: { type: 'integer', min: 5, max: 100, strict: true },
-          d: { type: 'integer', min: 5, max: 100, strict: true, required: true },
+          a: { type: ValidatorType.integer, min: 5, max: 10 },
+          b: {
+            type: ValidatorType.integer,
+            min: 5,
+            max: 100,
+            optional: true,
+            strict: true
+          },
+          c: { type: ValidatorType.integer, min: 5, max: 100, strict: true },
+          d: {
+            type: ValidatorType.integer,
+            min: 5,
+            max: 100,
+            strict: true,
+            required: true
+          },
           e: {
-            type: 'number',
+            type: ValidatorType.number,
             min: 5,
             max: 100,
             strict: true,
