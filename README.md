@@ -20,25 +20,36 @@ Validation module validates individual values or properties of an object.
 
 There are two main ways to use the validate module.
 
-- To validate an object, for example a server response
-  - Uses `ResponseValidator` class
+- To validate an object, for example a server response or any object with properties
+  - Use `ResponseValidator` class
 - To validate individual UI input values and add them to an update object that
   will be sent to a server to update a document
-  - Uses `InputValidator` class
+  - Use `InputValidator` class
   - All values will be cast to strings and trimmed of leading and trailing whitespace
 
 ### Example - Validating Server Response
 
 ```js
 // To be written
+const RULES = {
+  type: ValidatorType.object,
+  properties: {
+    id: { type: ValidatorType.string, required: true },
+    name: { type: ValidatorType.string, required: true }
+  }
+};
+let validator = new ResponseValidator();
+validator.input(resp).validate(RULES);
+if (validator.errors) {
+}
 ```
 
 ### Example - Validating UI Input
 
 ```js
 const RULES = {
-  title: { type: 'string' },
-  opacity: { type: 'number', min: 0, max: 1, default: 1, sanitize: true },
+  title: { type: ValidatorType.string },
+  opacity: { type: ValidatorType.number, min: 0, max: 1, default: 1, sanitize: true },
 }
 let changes = {};
 let reference = {
@@ -84,7 +95,7 @@ converted into a `ValidatorRule` object internally within this module.
   name method
 - `label` string - (_optional_), defaults to `name` and is used in errors to
   describe the input
-- `type` string or array of strings or strings separated by '|', (_required_)
+- `type` ValidatorType or array of ValidatorType or strings separated by '|', (_required_)
   must be one of the primitive types listed below
 - `format` string - (_optional_) can be used to specify a predefined format
 - `pattern` RegExp or Function - (_optional_) used to validate value

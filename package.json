@@ -1,11 +1,8 @@
 {
   "name": "epdoc-validate",
-  "version": "1.0.2-beta.7",
+  "version": "1.0.2-beta.8",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
-  "umd:main": "dist/src/index.umd.js",
-  "module": "dist/src/index.mjs",
-  "source": "src/index.ts",
   "license": "UNLICENSED",
   "private": true,
   "scripts": {
@@ -40,6 +37,6 @@
     "typescript": "^3.5.3"
   },
   "dependencies": {
-    "epdoc-util": "jpravetz/epdoc-util"
+    "epdoc-util": "github:jpravetz/epdoc-util"
   }
 }
