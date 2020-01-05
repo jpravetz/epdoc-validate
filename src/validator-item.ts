@@ -482,7 +482,7 @@ export class ValidatorItem extends ValidatorBase {
           try {
             const item = new ValidatorItem(v);
             item.valueApply(rule.arrayType);
-            if (item.hasErrors) {
+            if (item.hasErrors()) {
               this._errors.concat(item.errors);
             } else {
               this._result.push(item.output);

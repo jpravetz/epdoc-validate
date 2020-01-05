@@ -406,7 +406,7 @@ class ValidatorItem extends validator_base_1.ValidatorBase {
                     try {
                         const item = new ValidatorItem(v);
                         item.valueApply(rule.arrayType);
-                        if (item.hasErrors) {
+                        if (item.hasErrors()) {
                             this._errors.concat(item.errors);
                         }
                         else {
