@@ -1,0 +1,45 @@
+{
+  "description": "Tiger data",
+  "rule": {
+    "type": "object",
+    "required": true,
+    "properties": {
+      "tiger": {
+        "type": "object",
+        "required": true,
+        "properties": {
+          "key": { "type": "string", "required": true },
+          "my_credentials": { "type": "object", "optional": true }
+        }
+      },
+      "cat": { "type": "array", "optional": true, "itemType": { "type": "object" } }
+    }
+  },
+  "errors": [],
+  "response": {
+    "tiger": {
+      "cn": "example response",
+      "key": "mykey",
+      "my_credentials": {
+        "8": {
+          "api_key": "7987234908udwfljpoqweufjoiwqefw"
+        },
+        "18": { "api_key": "joqiewufoiajeoife" }
+      },
+      "started": "2018-11-27T23:36:20.361888"
+    },
+    "cat": [
+      {
+        "analytics": {
+          "total": { "unique": { "open": 0, "click": 0 }, "billable": { "open": 0 } }
+        },
+        "created": "2019-06-21T19:16:38.794785",
+        "tests": {}
+      },
+      {
+        "created": "2019-06-15T19:16:38.794785",
+        "tests": {}
+      }
+    ]
+  }
+}

@@ -1,5 +1,5 @@
 import { ValueCallback } from './validator-base';
-import { isObject, isString, isNonEmptyString, Dict } from 'epdoc-util';
+import { isObject, isString, isNonEmptyString, isDict } from 'epdoc-util';
 
 /**
  * Callback to process a value. This function signature is used by the pattern,
@@ -41,8 +41,8 @@ export type ValidatorRuleParams = {
   strict?: boolean;
   // For objects, a list of properties that the object may contain
   properties?: ValidatorRuleProps;
-  // if an array, and arrayType is specified, the entries must be of this type
-  arrayType?: string;
+  // if an array, and itemType is specified, the entries must be of this type
+  itemType?: string;
   // for arrays
   appendToArray?: boolean;
   // hook to allow value to be manipulated, eg converting 0/1 to false/true XXX use sanitize instead
@@ -92,6 +92,8 @@ const RULE_LIBRARY: { [key: string]: ValidatorRuleParams } = {
 };
 
 export class ValidatorRule {
+  // @ts-ignore
+  private _isValidatorRule: boolean = true;
   public name?: string;
   public label?: string;
   public type: ValidatorType = ValidatorType.string;
@@ -103,8 +105,8 @@ export class ValidatorRule {
   public required?: boolean;
   public optional?: boolean;
   public strict?: boolean;
-  public properties?: Dict;
-  public arrayType?: any; // if an array, the entries must be of this type
+  public properties?: Record<string, ValidatorRule>;
+  public itemType?: any; // if an array, the entries must be of this type
   public appendToArray?: boolean; // for arrays
   public fromView?: ValueCallback; // hook to allow value to be manipulated, eg converting 0/1 to false/true XXX use sanitize instead
   public readonly validRules = [
@@ -165,6 +167,10 @@ export class ValidatorRule {
     }
   }
 
+  static isInstance(val: any): val is ValidatorRule {
+    return val && isDict(val) && val._isValidatorRule;
+  }
+
   public isValid() {
     return this.type ? true : false;
   }
@@ -184,6 +190,13 @@ export class ValidatorRule {
       }
     }
     return this;
+  }
+
+  public getProperties(): Record<string, ValidatorRule> {
+    if (isDict(this.properties)) {
+      return this.properties;
+    }
+    return {} as Record<string, ValidatorRule>;
   }
 
   /**

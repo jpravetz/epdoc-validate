@@ -1,11 +1,55 @@
 import { ValidatorType } from './../src/validator-rule';
 import { ResponseValidator } from '../src/response-validator';
-import { deepCopy } from 'epdoc-util';
+import { Dict } from 'epdoc-util';
+import * as fs from 'fs';
+
+type TestResult = {
+  response?: any;
+  expected?: any;
+  errors?: any[];
+  description?: string;
+};
+
+type TestItem = TestResult & {
+  description: string;
+  rule: any;
+};
+
+function getTestData(): [string, TestItem][] {
+  let result: [string, TestItem][] = [];
+  let files = fs.readdirSync('./tests/response');
+  files.forEach(file => {
+    let parts = file.split('.');
+    if (parts && parts.length >= 2 && parts[parts.length - 1] === 'json') {
+      let item = readJson('./tests/response/' + file);
+      if (Array.isArray(item.results)) {
+        item.results.forEach((i: Dict) => {
+          let testItem: TestItem = {
+            description: [item.description, i.description].join(' '),
+            rule: item.rule,
+            response: i.response,
+            expected: i.expected,
+            errors: i.errors
+          };
+          result.push([testItem.description, testItem]);
+        });
+      } else {
+        let testItem: TestItem = item;
+        result.push([testItem.description, testItem]);
+      }
+    }
+  });
+  return result;
+}
+
+function readJson(path: string): any {
+  return JSON.parse(fs.readFileSync(path, 'utf8'));
+}
 
 describe('response', () => {
   describe('primitive', () => {
     describe('number', () => {
-      it('number pass', () => {
+      test('number pass', () => {
         const RULE = {
           type: ValidatorType.number,
           min: 5,
@@ -19,7 +63,7 @@ describe('response', () => {
         expect(validator.output).toEqual(EXPECTED);
       });
 
-      it('int', () => {
+      test('int', () => {
         const RULE = {
           type: ValidatorType.number,
           min: 5,
@@ -35,64 +79,19 @@ describe('response', () => {
     });
   });
 
-  describe('object', () => {
-    describe('number', () => {
-      const RULE = {
-        type: ValidatorType.object,
-        properties: {
-          a: { type: ValidatorType.integer, min: 5, max: 10 },
-          b: {
-            type: ValidatorType.integer,
-            min: 5,
-            max: 100,
-            optional: true,
-            strict: true
-          },
-          c: { type: ValidatorType.integer, min: 5, max: 100, strict: true },
-          d: {
-            type: ValidatorType.integer,
-            min: 5,
-            max: 100,
-            strict: true,
-            required: true
-          },
-          e: {
-            type: ValidatorType.number,
-            min: 5,
-            max: 100,
-            strict: true,
-            required: true,
-            default: 11.3
-          }
+  describe('iterate', () => {
+    let items: [string, TestItem][] = getTestData();
+
+    test.each(items)('%s', (description, item: TestItem) => {
+      if (item.rule && item.response) {
+        if (!item.expected) {
+          item.expected = item.response;
         }
-      };
-      const RESPONSE = {
-        a: RULE.properties.a.min + 3,
-        d: RULE.properties.d.min + 27
-      };
-      const EXPECTED = {
-        a: RESPONSE.a,
-        d: RESPONSE.d,
-        e: RULE.properties.e.default
-      };
-
-      it('integer strict default', () => {
         let validator = new ResponseValidator();
-        validator.input(RESPONSE).validate(RULE);
-        expect(validator.hasErrors()).toBe(false);
-        expect(validator.output).toEqual(EXPECTED);
-      });
-
-      it('integer strict required no default', () => {
-        let rule = deepCopy(RULE);
-        rule.properties.e.default = undefined;
-        let expected = deepCopy(EXPECTED);
-        expected.e = undefined;
-        let validator = new ResponseValidator();
-        validator.input(RESPONSE).validate(rule);
-        expect(validator.errors.length).toBe(1);
-        expect(validator.output).toEqual(expected);
-      });
+        validator.input(item.response).validate(item.rule);
+        expect(validator.errors).toEqual(item.errors);
+        expect(validator.output).toEqual(item.expected);
+      }
     });
   });
 });

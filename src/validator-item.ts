@@ -36,10 +36,17 @@ const APPLY_METHOD: { [key: string]: string } = {
   array: 'arrayApply'
 };
 
+type PropertyValidity = {
+  present: Record<string, boolean>;
+  notAllowed: Record<string, boolean>;
+  missing: Record<string, boolean>;
+};
+
 export class ValidatorItem extends ValidatorBase {
   protected _value: any;
   protected _changes?: Dict;
   protected _refDoc?: Dict;
+  protected _chain: string[] = [];
 
   // track errors here for objects with properties, so we collect them all before failing
   protected _name?: string;
@@ -59,12 +66,31 @@ export class ValidatorItem extends ValidatorBase {
     return this._name;
   }
 
+  chain(val: string | string[]): this {
+    this._chain = isString(val) ? [val] : val;
+    return this;
+  }
+
+  getChain(): string[] {
+    if (this._name) {
+      if (this._chain && this._chain.length) {
+        return [...this._chain, this._name];
+      }
+      return [this._name];
+    }
+    return this._chain;
+  }
+
   set label(val) {
     this._label = val;
   }
 
   get label(): string {
-    return this._label ? this._label : this._name ? this._name : '?';
+    if (this._label) {
+      return this._label;
+    }
+    let result = this.getChain();
+    return result ? result.join('.') : '?';
   }
 
   get errors() {
@@ -447,41 +473,103 @@ export class ValidatorItem extends ValidatorBase {
   }
 
   protected propertiesApply(rule: ValidatorRule): this {
-    if (rule.type === 'object' && rule.properties) {
-      let errors: ValidatorErrorItem[] = [];
-      Object.keys(rule.properties).forEach(prop => {
-        try {
-          const item = new ValidatorItem(this._value[prop]);
-          item.name(prop).validate((rule.properties as Dict)[prop]);
-          if (item.hasErrors()) {
-            item.errors.forEach(err => {
-              err.key = [this.label, err.key].join('.');
-            });
-            errors = errors.concat(item.errors);
-          } else if (item.output !== undefined) {
-            this._result[prop] = item.output;
+    if (rule.type === 'object') {
+      if (rule.properties) {
+        let errors: ValidatorErrorItem[] = [];
+        let validity: PropertyValidity = this.checkPropertyValidity(rule);
+        // console.log('validity', validity);
+        if (
+          true ||
+          (!Object.keys(validity.notAllowed).length &&
+            !Object.keys(validity.missing).length)
+        ) {
+          Object.keys(validity.present).forEach(prop => {
+            try {
+              if ((rule.properties as Dict)[prop]) {
+                // console.log('rules', prop);
+                const subRule = new ValidatorRule((rule.properties as Dict)[prop]);
+                const item = new ValidatorItem(this._value[prop]);
+                // console.log('validate', prop);
+                item
+                  .chain(this.getChain())
+                  .name(prop)
+                  .validate(subRule);
+                if (item.hasErrors()) {
+                  item.errors.forEach(err => {
+                    err.key = [this.label, err.key].join('.');
+                  });
+                  errors = errors.concat(item.errors);
+                } else if (item.output !== undefined) {
+                  this._result[prop] = item.output;
+                }
+              } else {
+                // console.log('no rules', prop);
+                this._result[prop] = this._value[prop];
+              }
+            } catch (err) {
+              errors.push(err);
+            }
+          });
+          if (errors.length) {
+            this.addErrors(errors);
           }
-        } catch (err) {
-          errors.push(err);
         }
-      });
-      if (errors.length) {
-        this.addErrors(errors);
+      } else {
+        // If no rule defined for subobject then just pass thru
+        this._result = this._value;
       }
     }
     return this;
   }
 
-  // TODO verify the functionality of this method
+  protected checkPropertyValidity(rule: ValidatorRule): PropertyValidity {
+    let result: PropertyValidity = {
+      present: {},
+      notAllowed: {},
+      missing: {}
+    };
+    let val = this._value as Dict;
+    let ruleProps = rule.getProperties();
+    Object.keys(val).forEach(key => {
+      if (ruleProps && ruleProps[key]) {
+        result.present[key] = true;
+      } else if (rule.strict && !ruleProps[key].optional) {
+        result.notAllowed[key] = true;
+        this._errors.push({ key: key, type: ValidatorErrorType.notAllowed });
+      } else {
+        result.present[key] = true;
+      }
+    });
+    Object.keys(ruleProps).forEach(key => {
+      if ((ruleProps[key].required || rule.strict) && !result.present[key]) {
+        if (ruleProps[key].default) {
+          result.present[key] = true;
+        } else {
+          result.missing[key] = true;
+          this._errors.push({ key: key, type: ValidatorErrorType.missing });
+        }
+      }
+    });
+    return result;
+  }
+
   protected arrayApply(val: any, rule: ValidatorRule): this {
+    // console.log('arrayApply', val, rule);
     if (Array.isArray(val)) {
       this._result = [];
-      if (rule.arrayType) {
+      if (rule.itemType) {
         this._result = [];
-        for (const v of this._value) {
+        for (let idx = 0; idx < val.length; ++idx) {
+          const v = val[idx];
+
           try {
             const item = new ValidatorItem(v);
-            item.valueApply(rule.arrayType);
+            const subRule = new ValidatorRule(rule.itemType);
+            item
+              .chain(this.getChain())
+              .name(String(idx))
+              .validate(subRule);
+
             if (item.hasErrors()) {
               this._errors.concat(item.errors);
             } else {
@@ -492,8 +580,11 @@ export class ValidatorItem extends ValidatorBase {
           }
         }
       } else {
+        // console.log('arrayApply result', val);
         this._result = val;
       }
+    } else {
+      return this.addError(ValidatorErrorType.invalid);
     }
     return this;
   }

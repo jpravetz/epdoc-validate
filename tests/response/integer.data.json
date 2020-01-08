@@ -1,0 +1,10 @@
+{
+  "description": "Integer",
+  "rule": {
+    "type": "number",
+    "min": 5,
+    "max": 10
+  },
+  "errors": [],
+  "response": 8
+}

@@ -5,6 +5,7 @@
     "declaration": true,
     "sourceMap": true,
     "outDir": "./dist",
+    "typeRoots": ["node_modules/@types", "node_modules/@types/node"],
     "removeComments": true /* Do not emit comments to output. */,
     "strict": true /* Enable all strict type-checking options. */,
     // "noImplicitAny": true,                 /* Raise error on expressions and declarations with an implied 'any' type. */

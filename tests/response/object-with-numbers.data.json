@@ -1,0 +1,56 @@
+{
+  "description": "Object with numbers",
+  "rule": {
+    "type": "object",
+    "properties": {
+      "a": { "type": "integer", "min": 5, "max": 10 },
+      "b": {
+        "type": "integer",
+        "min": 5,
+        "max": 100,
+        "optional": true
+      },
+      "c": { "type": "integer", "min": 5, "max": 100 },
+      "d": {
+        "type": "integer",
+        "min": 5,
+        "max": 100,
+        "required": true
+      },
+      "e": {
+        "type": "number",
+        "min": 5,
+        "max": 100,
+        "required": true,
+        "default": 11.3
+      }
+    }
+  },
+  "results": [
+    {
+      "description": "Pass",
+      "errors": [],
+      "response": {
+        "a": 8,
+        "d": 32
+      },
+      "expected": {
+        "a": 8,
+        "d": 32,
+        "e": 11.3
+      }
+    },
+    {
+      "description": "Missing d error",
+      "errors": [{ "type": "missing", "key": "d" }],
+      "response": {
+        "a": 8,
+        "e": 17
+      },
+      "expected": {
+        "a": 8,
+        "e": 17
+      }
+    }
+  ]
+}
