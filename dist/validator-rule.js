@@ -51,6 +51,7 @@ const RULE_LIBRARY = {
 };
 class ValidatorRule {
     constructor(rule) {
+        this._isValidatorRule = true;
         this.type = ValidatorType.string;
         this.validRules = [
             'string',
@@ -79,6 +80,9 @@ class ValidatorRule {
             throw new Error('Invalid validator rule');
         }
     }
+    static isInstance(val) {
+        return val && epdoc_util_1.isDict(val) && val._isValidatorRule;
+    }
     isValid() {
         return this.type ? true : false;
     }
@@ -95,6 +99,12 @@ class ValidatorRule {
             }
         }
         return this;
+    }
+    getProperties() {
+        if (epdoc_util_1.isDict(this.properties)) {
+            return this.properties;
+        }
+        return {};
     }
     _recurse(rule) {
         const props = [];

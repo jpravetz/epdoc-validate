@@ -1,5 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+const validator_rule_1 = require("./validator-rule");
 const validator_base_1 = require("./validator-base");
 const epdoc_util_1 = require("epdoc-util");
 const REGEX = {
@@ -27,6 +28,7 @@ const APPLY_METHOD = {
 class ValidatorItem extends validator_base_1.ValidatorBase {
     constructor(value, parent) {
         super(parent);
+        this._chain = [];
         this._value = value;
     }
     name(name) {
@@ -36,11 +38,28 @@ class ValidatorItem extends validator_base_1.ValidatorBase {
     getName() {
         return this._name;
     }
+    chain(val) {
+        this._chain = epdoc_util_1.isString(val) ? [val] : val;
+        return this;
+    }
+    getChain() {
+        if (this._name) {
+            if (this._chain && this._chain.length) {
+                return [...this._chain, this._name];
+            }
+            return [this._name];
+        }
+        return this._chain;
+    }
     set label(val) {
         this._label = val;
     }
     get label() {
-        return this._label ? this._label : this._name ? this._name : '?';
+        if (this._label) {
+            return this._label;
+        }
+        let result = this.getChain();
+        return result ? result.join('.') : '?';
     }
     get errors() {
         return this._errors;
@@ -371,41 +390,98 @@ class ValidatorItem extends validator_base_1.ValidatorBase {
         return this;
     }
     propertiesApply(rule) {
-        if (rule.type === 'object' && rule.properties) {
-            let errors = [];
-            Object.keys(rule.properties).forEach(prop => {
-                try {
-                    const item = new ValidatorItem(this._value[prop]);
-                    item.name(prop).validate(rule.properties[prop]);
-                    if (item.hasErrors()) {
-                        item.errors.forEach(err => {
-                            err.key = [this.label, err.key].join('.');
-                        });
-                        errors = errors.concat(item.errors);
-                    }
-                    else if (item.output !== undefined) {
-                        this._result[prop] = item.output;
+        if (rule.type === 'object') {
+            if (rule.properties) {
+                let errors = [];
+                let validity = this.checkPropertyValidity(rule);
+                if (true ||
+                    (!Object.keys(validity.notAllowed).length &&
+                        !Object.keys(validity.missing).length)) {
+                    Object.keys(validity.present).forEach(prop => {
+                        try {
+                            if (rule.properties[prop]) {
+                                const subRule = new validator_rule_1.ValidatorRule(rule.properties[prop]);
+                                const item = new ValidatorItem(this._value[prop]);
+                                item
+                                    .chain(this.getChain())
+                                    .name(prop)
+                                    .validate(subRule);
+                                if (item.hasErrors()) {
+                                    item.errors.forEach(err => {
+                                        err.key = [this.label, err.key].join('.');
+                                    });
+                                    errors = errors.concat(item.errors);
+                                }
+                                else if (item.output !== undefined) {
+                                    this._result[prop] = item.output;
+                                }
+                            }
+                            else {
+                                this._result[prop] = this._value[prop];
+                            }
+                        }
+                        catch (err) {
+                            errors.push(err);
+                        }
+                    });
+                    if (errors.length) {
+                        this.addErrors(errors);
                     }
                 }
-                catch (err) {
-                    errors.push(err);
-                }
-            });
-            if (errors.length) {
-                this.addErrors(errors);
+            }
+            else {
+                this._result = this._value;
             }
         }
         return this;
     }
+    checkPropertyValidity(rule) {
+        let result = {
+            present: {},
+            notAllowed: {},
+            missing: {}
+        };
+        let val = this._value;
+        let ruleProps = rule.getProperties();
+        Object.keys(val).forEach(key => {
+            if (ruleProps && ruleProps[key]) {
+                result.present[key] = true;
+            }
+            else if (rule.strict && !ruleProps[key].optional) {
+                result.notAllowed[key] = true;
+                this._errors.push({ key: key, type: validator_base_1.ValidatorErrorType.notAllowed });
+            }
+            else {
+                result.present[key] = true;
+            }
+        });
+        Object.keys(ruleProps).forEach(key => {
+            if ((ruleProps[key].required || rule.strict) && !result.present[key]) {
+                if (ruleProps[key].default) {
+                    result.present[key] = true;
+                }
+                else {
+                    result.missing[key] = true;
+                    this._errors.push({ key: key, type: validator_base_1.ValidatorErrorType.missing });
+                }
+            }
+        });
+        return result;
+    }
     arrayApply(val, rule) {
         if (Array.isArray(val)) {
             this._result = [];
-            if (rule.arrayType) {
+            if (rule.itemType) {
                 this._result = [];
-                for (const v of this._value) {
+                for (let idx = 0; idx < val.length; ++idx) {
+                    const v = val[idx];
                     try {
                         const item = new ValidatorItem(v);
-                        item.valueApply(rule.arrayType);
+                        const subRule = new validator_rule_1.ValidatorRule(rule.itemType);
+                        item
+                            .chain(this.getChain())
+                            .name(String(idx))
+                            .validate(subRule);
                         if (item.hasErrors()) {
                             this._errors.concat(item.errors);
                         }
@@ -421,6 +497,9 @@ class ValidatorItem extends validator_base_1.ValidatorBase {
             else {
                 this._result = val;
             }
+        }
+        else {
+            return this.addError(validator_base_1.ValidatorErrorType.invalid);
         }
         return this;
     }
