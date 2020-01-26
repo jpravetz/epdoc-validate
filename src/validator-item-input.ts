@@ -39,6 +39,9 @@ export class ValidatorItemInput extends ValidatorItem {
     super(value);
   }
 
+  /**
+   * Test based on the assumption this is a string input from UI
+   */
   public hasValue(): boolean {
     return this._value && this._value.length > 0;
   }

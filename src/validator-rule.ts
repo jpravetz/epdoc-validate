@@ -1,11 +1,12 @@
 import { ValueCallback } from './validator-base';
-import { isObject, isString, isNonEmptyString, isDict } from 'epdoc-util';
+import { isObject, isString, isNonEmptyString, isDict, isRegExp } from 'epdoc-util';
 
 /**
  * Callback to process a value. This function signature is used by the pattern,
  * sanitize and fromView callbacks.
  */
 export type ValidatorCallback = (val: any, rule: ValidatorRule) => any;
+export type IsMissingCallback = (val: any) => boolean;
 
 export interface ValidatorRuleProps {
   [key: string]: ValidatorRuleParams;
@@ -29,7 +30,7 @@ export enum ValidatorType {
 export type ValidatorRuleParams = {
   name?: string;
   label?: string;
-  type: ValidatorType;
+  type?: ValidatorType;
   format?: string;
   readonly pattern?: RegExp | ValidatorCallback;
   readonly default?: any;
@@ -39,6 +40,7 @@ export type ValidatorRuleParams = {
   required?: boolean | ValidatorRuleProps;
   optional?: boolean | ValidatorRuleProps;
   strict?: boolean;
+  isMissing?: IsMissingCallback;
   // For objects, a list of properties that the object may contain
   properties?: ValidatorRuleProps;
   // if an array, and itemType is specified, the entries must be of this type
@@ -105,6 +107,7 @@ export class ValidatorRule {
   public required?: boolean;
   public optional?: boolean;
   public strict?: boolean;
+  public isMissing?: IsMissingCallback;
   public properties?: Record<string, ValidatorRule>;
   public itemType?: any; // if an array, the entries must be of this type
   public appendToArray?: boolean; // for arrays
@@ -162,6 +165,9 @@ export class ValidatorRule {
       this._fromLibrary(rule as string);
     }
     this.label = this.label ? this.label : this.name;
+    if (!this.type && isRegExp(this.pattern)) {
+      this.type = ValidatorType.string;
+    }
     if (!this.isValid()) {
       throw new Error('Invalid validator rule');
     }
@@ -172,7 +178,13 @@ export class ValidatorRule {
   }
 
   public isValid() {
-    return this.type ? true : false;
+    if (!this.type) {
+      return false;
+    }
+    if (this.pattern && !isRegExp(this.pattern)) {
+      return false;
+    }
+    return true;
   }
 
   private _fromLibrary(sRule: string) {

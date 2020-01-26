@@ -13,6 +13,7 @@ Validation module validates individual values or properties of an object.
 - Attempts to build output even if errors are encountered
 - Supports comparing values against a reference document (eg. to save only
   changes to a document)
+- Output is built that onlyu contains changed values
 
 ## Sample Usage
 
@@ -22,10 +23,10 @@ There are two main ways to use the validate module.
 
 - To validate an object, for example a server response or any object with properties
   - Use `ResponseValidator` class
-- To validate individual UI input values and add them to an update object that
-  will be sent to a server to update a document
+- To validate individual UI input values and add them to a changes object that
+  may be sent to a server to update a document
   - Use `InputValidator` class
-  - All values will be cast to strings and trimmed of leading and trailing whitespace
+  - Input strings are trimmed of leading and trailing whitespace
 
 ### Example - Validating Server Response
 
@@ -95,12 +96,12 @@ converted into a `ValidatorRule` object internally within this module.
   name method
 - `label` string - (_optional_), defaults to `name` and is used in errors to
   describe the input
-- `type` ValidatorType or array of ValidatorType or strings separated by '|', (_required_)
+- `type` ValidatorType or array of ValidatorType or strings separated by '|', (_required_). Defaults to `string` if pattern is a RegExp.
   must be one of the primitive types listed below
 - `format` string - (_optional_) can be used to specify a predefined format
-- `pattern` RegExp or Function - (_optional_) used to validate value
+- `pattern` RegExp or Function - (_optional_) used to validate value. If a pattern is set to RegExp then type is assumed to be `string`.
 - `sanitize` Function, boolean or string - See below for more details
-- `default` (_optional_) default value to use if value is invalid or missing
+- `default` (_optional_) default value to use if value is undefined, null, an empty string or missing
 - `min` number - (_optional_) minimum string length or minimum number value
 - `max` number - (_optional_) maximum string length or maximum number value
 - `required` boolean - (_optional_) for objects indicates if the value is
@@ -108,6 +109,7 @@ converted into a `ValidatorRule` object internally within this module.
 - `optional` boolean - (_optional_) for objects indicates if the value is
   optional (relevant only when `strict` is true)
 - `strict` boolean - (_optional_) for objects use strict testing
+- `isMissing` Function | array of any - (_optional_) customize a callback test to see if value is missing.
 - `properties` GenericObject - (_optional_) a dictionary of properties that
   should recursively be checked on the value
 

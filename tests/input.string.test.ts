@@ -44,7 +44,7 @@ describe('input', () => {
         .name('b')
         .validate(RULE1);
       expect(validator.hasErrors()).toBe(false);
-      expect(changes.a).toBe('');
+      expect(changes.a).toBe(undefined);
       expect(changes.b).toBe(i1.trim());
     });
     it('email', () => {

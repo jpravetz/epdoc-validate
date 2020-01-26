@@ -1,4 +1,4 @@
-import { ValidatorRule } from './validator-rule';
+import { ValidatorRule, IsMissingCallback } from './validator-rule';
 import { ValidatorBase, ValidatorErrorType, ValidatorErrorItem } from './validator-base';
 import {
   isObject,
@@ -10,7 +10,8 @@ import {
   Dict,
   deepCopy,
   isRegExp,
-  isDate
+  isDate,
+  isDefined
 } from 'epdoc-util';
 
 const REGEX = {
@@ -102,7 +103,9 @@ export class ValidatorItem extends ValidatorBase {
   }
 
   /**
-   * Can be overridden by subclasses
+   * Can be overridden by subclasses, for example ValidatorItemInput which
+   * accepts input from UI and will want to treat empty strings as undefined.
+   * Default is to return true if not undefined or null.
    */
   public hasValue() {
     return hasValue(this._value);
@@ -144,15 +147,49 @@ export class ValidatorItem extends ValidatorBase {
     return this.valueApply(rule);
   }
 
+  isMissing(rule: ValidatorRule): boolean {
+    if (Array.isArray(rule.isMissing)) {
+      for (let idx = 0; idx < rule.isMissing.length; ++idx) {
+        if (this._value === rule.isMissing[idx]) {
+          return true;
+        }
+      }
+    } else if (isFunction(rule.isMissing)) {
+      return (rule.isMissing as IsMissingCallback)(this._value);
+    } else if (isBoolean(rule.isMissing)) {
+      return rule.isMissing;
+    }
+    return this.hasValue() ? false : true;
+  }
+
+  protected setDefault(rule: ValidatorRule): this {
+    if (isFunction(rule.default)) {
+      let val = rule.default(rule);
+      return this.setResult(val);
+    }
+    let def = rule.default;
+    if (def === 'undefined') {
+      def = undefined;
+    } else if (def === null) {
+      def = null;
+    }
+    return this.setResult(def);
+  }
+
+  protected setResult(val: any): this {
+    this._result = val;
+    return this;
+  }
+
   protected valueApply(rule: ValidatorRule): this {
     // First test if value is empty and required, or if present and strict and not optional
-    if (!this.hasValue()) {
-      if (rule.default) {
-        this._result = rule.default;
-        return this;
+    if (this.isMissing(rule)) {
+      if (isDefined(rule.default)) {
+        return this.setDefault(rule);
       } else if (rule.required) {
         return this.addError(ValidatorErrorType.missing);
       }
+      return this;
     } else if (rule.strict && !rule.optional && !rule.required) {
       return this.addError(ValidatorErrorType.notAllowed);
     }
@@ -202,11 +239,6 @@ export class ValidatorItem extends ValidatorBase {
     return this;
   }
 
-  protected setResult(val: any): this {
-    this._result = val;
-    return this;
-  }
-
   /**
    * Apply rule to val returning a boolean or throwing an error.
    * @param {*} val
@@ -248,26 +280,17 @@ export class ValidatorItem extends ValidatorBase {
 
   /**
    * Apply rule to val returning a string or throwing an error.
+   * This will not be executed if val is of length 0.
    * @param {*} val
    */
   protected stringApply(val: any, rule: ValidatorRule) {
-    if (isString(val)) {
-      return this.applyStringLengthTests(val, rule);
-    }
-    if (rule.default && (val === undefined || val === null)) {
-      if (isString(rule.default)) {
-        return this.setResult(rule.default);
-      }
-      if (isFunction(rule.default)) {
-        return this.setResult(rule.default(val, rule));
-      }
-    }
     if (isFunction(rule.sanitize)) {
       val = rule.sanitize(val, rule);
-      return this.applyStringLengthTests(val, rule);
+    } else if (!isString(val) && (rule.sanitize === true || rule.sanitize === 'string')) {
+      val = String(val);
     }
-    if (rule.sanitize === true || rule.sanitize === 'string') {
-      return this.applyStringLengthTests(String(val), rule);
+    if (isString(val)) {
+      return this.applyStringLengthTests(val, rule);
     }
     if (rule.required) {
       return this.addError(ValidatorErrorType.missing);
@@ -296,11 +319,8 @@ export class ValidatorItem extends ValidatorBase {
       return this.addError(ValidatorErrorType.lenMin, { min: rule.min });
     }
     if (isNumber(rule.max) && val.length > (rule.max as number)) {
-      if (isString(rule.default)) {
-        return this.setResult(rule.default);
-      }
-      if (isFunction(rule.default)) {
-        return this.setResult(rule.default(val, rule, 'max'));
+      if (isDefined(rule.default)) {
+        return this.setDefault(rule);
       }
       return this.addError(ValidatorErrorType.lenMax, { max: rule.max });
     }

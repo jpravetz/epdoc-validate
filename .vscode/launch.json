@@ -7,11 +7,12 @@
       "name": "Jest Tests",
       "trace": "true",
       "program": "${workspaceFolder}/node_modules/jest/bin/jest.js",
+      "args": ["--runInBand"],
       "outFiles": ["${workspaceFolder}/dist/**/*.js"],
-      "runtimeArgs": [
-        "--inspect-brk"
-      ],
-      "port": 9229
+      "runtimeArgs": ["--inspect-brk"],
+      "port": 9229,
+      "console": "integratedTerminal",
+      "internalConsoleOptions": "neverOpen"
     }
   ]
 }
