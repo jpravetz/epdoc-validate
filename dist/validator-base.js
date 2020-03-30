@@ -38,6 +38,10 @@ class ValidatorBase {
     hasErrors() {
         return this._errors.length ? true : false;
     }
+    addErrorItem(err) {
+        this._errors.push(err);
+        return this;
+    }
     addErrors(errs) {
         this._errors = this._errors.concat(errs);
         return this;

@@ -1,6 +1,6 @@
 import { ValidatorBase, IValidator, ValueCallback } from './validator-base';
 import { ValidatorItemInput } from './validator-item-input';
-import { ValidatorRule, ValidatorRuleParams } from './validator-rule';
+import { ValidatorRule, IValidatorRuleParams } from './validator-rule';
 import { ValidatorItem } from './validator-item';
 import { Dict, deepEquals } from 'epdoc-util';
 
@@ -23,7 +23,6 @@ export class InputValidator extends ValidatorBase implements IValidator {
   constructor(changes: Dict = {}) {
     super();
     this._changes = changes;
-    this._errors;
   }
 
   public clear() {
@@ -68,10 +67,10 @@ export class InputValidator extends ValidatorBase implements IValidator {
     return this;
   }
 
-  public validate(rule: ValidatorRuleParams | ValidatorRuleParams[]): this {
+  public validate(rule: IValidatorRuleParams | IValidatorRuleParams[]): this {
     this.applyChainVariables();
 
-    const rules: ValidatorRuleParams[] = Array.isArray(rule) ? rule : [rule];
+    const rules: IValidatorRuleParams[] = Array.isArray(rule) ? rule : [rule];
     let passed = false;
     for (let idx = 0; idx < rules.length && !passed; ++idx) {
       const validatorRule = new ValidatorRule(rules[idx]);

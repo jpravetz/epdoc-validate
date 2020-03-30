@@ -51,7 +51,6 @@ const RULE_LIBRARY = {
 };
 class ValidatorRule {
     constructor(rule) {
-        this._isValidatorRule = true;
         this.type = ValidatorType.string;
         this.validRules = [
             'string',
@@ -64,6 +63,7 @@ class ValidatorRule {
             'any',
             'integer'
         ];
+        this._isValidatorRule = true;
         if (epdoc_util_1.isObject(rule)) {
             const r = rule;
             Object.assign(this, r);
@@ -76,6 +76,9 @@ class ValidatorRule {
             this._fromLibrary(rule);
         }
         this.label = this.label ? this.label : this.name;
+        if (!this.type && epdoc_util_1.isRegExp(this.pattern)) {
+            this.type = ValidatorType.string;
+        }
         if (!this.isValid()) {
             throw new Error('Invalid validator rule');
         }
@@ -84,7 +87,19 @@ class ValidatorRule {
         return val && epdoc_util_1.isDict(val) && val._isValidatorRule;
     }
     isValid() {
-        return this.type ? true : false;
+        if (!this.type) {
+            return false;
+        }
+        if (this.pattern && !epdoc_util_1.isRegExp(this.pattern)) {
+            return false;
+        }
+        return true;
+    }
+    getProperties() {
+        if (epdoc_util_1.isDict(this.properties)) {
+            return this.properties;
+        }
+        return {};
     }
     _fromLibrary(sRule) {
         if (RULE_LIBRARY[sRule]) {
@@ -99,12 +114,6 @@ class ValidatorRule {
             }
         }
         return this;
-    }
-    getProperties() {
-        if (epdoc_util_1.isDict(this.properties)) {
-            return this.properties;
-        }
-        return {};
     }
     _recurse(rule) {
         const props = [];

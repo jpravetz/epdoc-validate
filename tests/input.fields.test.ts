@@ -1,8 +1,8 @@
-import { ValidatorRuleParams, ValidatorType } from './../src/validator-rule';
+import { IValidatorRuleParams, ValidatorType } from './../src/validator-rule';
 import { Dict } from 'epdoc-util';
 import { InputValidator } from '../src/input-validator';
 
-const valRules: { [key: string]: ValidatorRuleParams } = {
+const valRules: { [key: string]: IValidatorRuleParams } = {
   email: {
     name: 'email',
     format: 'email',

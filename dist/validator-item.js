@@ -58,7 +58,7 @@ class ValidatorItem extends validator_base_1.ValidatorBase {
         if (this._label) {
             return this._label;
         }
-        let result = this.getChain();
+        const result = this.getChain();
         return result ? result.join('.') : '?';
     }
     get errors() {
@@ -77,7 +77,7 @@ class ValidatorItem extends validator_base_1.ValidatorBase {
         this._refDoc = val;
     }
     addError(type, params) {
-        let err = { key: this.label, type: type, params: params };
+        const err = { key: this.label, type, params };
         this._errors.push(err);
         return this;
     }
@@ -93,15 +93,49 @@ class ValidatorItem extends validator_base_1.ValidatorBase {
         }
         return this.valueApply(rule);
     }
+    isMissing(rule) {
+        if (Array.isArray(rule.isMissing)) {
+            for (let idx = 0; idx < rule.isMissing.length; ++idx) {
+                if (this._value === rule.isMissing[idx]) {
+                    return true;
+                }
+            }
+        }
+        else if (epdoc_util_1.isFunction(rule.isMissing)) {
+            return rule.isMissing(this._value);
+        }
+        else if (epdoc_util_1.isBoolean(rule.isMissing)) {
+            return rule.isMissing;
+        }
+        return this.hasValue() ? false : true;
+    }
+    setDefault(rule) {
+        if (epdoc_util_1.isFunction(rule.default)) {
+            const val = rule.default(rule);
+            return this.setResult(val);
+        }
+        let def = rule.default;
+        if (def === 'undefined') {
+            def = undefined;
+        }
+        else if (def === null) {
+            def = null;
+        }
+        return this.setResult(def);
+    }
+    setResult(val) {
+        this._result = val;
+        return this;
+    }
     valueApply(rule) {
-        if (!this.hasValue()) {
-            if (rule.default) {
-                this._result = rule.default;
-                return this;
+        if (this.isMissing(rule)) {
+            if (epdoc_util_1.isDefined(rule.default)) {
+                return this.setDefault(rule);
             }
             else if (rule.required) {
                 return this.addError(validator_base_1.ValidatorErrorType.missing);
             }
+            return this;
         }
         else if (rule.strict && !rule.optional && !rule.required) {
             return this.addError(validator_base_1.ValidatorErrorType.notAllowed);
@@ -142,10 +176,6 @@ class ValidatorItem extends validator_base_1.ValidatorBase {
         }
         return this;
     }
-    setResult(val) {
-        this._result = val;
-        return this;
-    }
     booleanApply(val, rule) {
         if (epdoc_util_1.isBoolean(val)) {
             return this.setResult(val);
@@ -181,23 +211,14 @@ class ValidatorItem extends validator_base_1.ValidatorBase {
         return this.addError(validator_base_1.ValidatorErrorType.invalid);
     }
     stringApply(val, rule) {
-        if (epdoc_util_1.isString(val)) {
-            return this.applyStringLengthTests(val, rule);
-        }
-        if (rule.default && (val === undefined || val === null)) {
-            if (epdoc_util_1.isString(rule.default)) {
-                return this.setResult(rule.default);
-            }
-            if (epdoc_util_1.isFunction(rule.default)) {
-                return this.setResult(rule.default(val, rule));
-            }
-        }
         if (epdoc_util_1.isFunction(rule.sanitize)) {
             val = rule.sanitize(val, rule);
-            return this.applyStringLengthTests(val, rule);
         }
-        if (rule.sanitize === true || rule.sanitize === 'string') {
-            return this.applyStringLengthTests(String(val), rule);
+        else if (!epdoc_util_1.isString(val) && (rule.sanitize === true || rule.sanitize === 'string')) {
+            val = String(val);
+        }
+        if (epdoc_util_1.isString(val)) {
+            return this.applyStringLengthTests(val, rule);
         }
         if (rule.required) {
             return this.addError(validator_base_1.ValidatorErrorType.missing);
@@ -225,11 +246,8 @@ class ValidatorItem extends validator_base_1.ValidatorBase {
             return this.addError(validator_base_1.ValidatorErrorType.lenMin, { min: rule.min });
         }
         if (epdoc_util_1.isNumber(rule.max) && val.length > rule.max) {
-            if (epdoc_util_1.isString(rule.default)) {
-                return this.setResult(rule.default);
-            }
-            if (epdoc_util_1.isFunction(rule.default)) {
-                return this.setResult(rule.default(val, rule, 'max'));
+            if (epdoc_util_1.isDefined(rule.default)) {
+                return this.setDefault(rule);
             }
             return this.addError(validator_base_1.ValidatorErrorType.lenMax, { max: rule.max });
         }
@@ -393,7 +411,7 @@ class ValidatorItem extends validator_base_1.ValidatorBase {
         if (rule.type === 'object') {
             if (rule.properties) {
                 let errors = [];
-                let validity = this.checkPropertyValidity(rule);
+                const validity = this.checkIPropertyValidity(rule);
                 if (true ||
                     (!Object.keys(validity.notAllowed).length &&
                         !Object.keys(validity.missing).length)) {
@@ -435,21 +453,21 @@ class ValidatorItem extends validator_base_1.ValidatorBase {
         }
         return this;
     }
-    checkPropertyValidity(rule) {
-        let result = {
+    checkIPropertyValidity(rule) {
+        const result = {
             present: {},
             notAllowed: {},
             missing: {}
         };
-        let val = this._value;
-        let ruleProps = rule.getProperties();
+        const val = this._value;
+        const ruleProps = rule.getProperties();
         Object.keys(val).forEach(key => {
             if (ruleProps && ruleProps[key]) {
                 result.present[key] = true;
             }
             else if (rule.strict && !ruleProps[key].optional) {
                 result.notAllowed[key] = true;
-                this._errors.push({ key: key, type: validator_base_1.ValidatorErrorType.notAllowed });
+                this._errors.push({ key, type: validator_base_1.ValidatorErrorType.notAllowed });
             }
             else {
                 result.present[key] = true;
@@ -462,7 +480,7 @@ class ValidatorItem extends validator_base_1.ValidatorBase {
                 }
                 else {
                     result.missing[key] = true;
-                    this._errors.push({ key: key, type: validator_base_1.ValidatorErrorType.missing });
+                    this._errors.push({ key, type: validator_base_1.ValidatorErrorType.missing });
                 }
             }
         });

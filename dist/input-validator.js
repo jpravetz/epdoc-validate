@@ -8,7 +8,6 @@ class InputValidator extends validator_base_1.ValidatorBase {
     constructor(changes = {}) {
         super();
         this._changes = changes;
-        this._errors;
     }
     clear() {
         this._changes = {};

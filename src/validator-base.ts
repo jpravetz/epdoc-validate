@@ -1,5 +1,4 @@
-import { ValidationErrorStringCallback } from './validator-base';
-import { ValidatorRuleParams } from './validator-rule';
+import { IValidatorRuleParams } from './validator-rule';
 import { Dict } from 'epdoc-util';
 import { ValidatorItem } from './validator-item';
 
@@ -8,7 +7,7 @@ export type ValueCallback = (val: any) => any;
 export interface IValidator {
   _itemValidator?: ValidatorItem;
   input(val: any): this;
-  validate(rule: ValidatorRuleParams | ValidatorRuleParams[]): this;
+  validate(rule: IValidatorRuleParams | IValidatorRuleParams[]): this;
 }
 
 export enum ValidatorErrorType {
@@ -24,7 +23,7 @@ export enum ValidatorErrorType {
   dateMax = 'dateMax'
 }
 
-export type ValidatorErrorItem = {
+export interface IValidatorErrorItem {
   // Name of attribute that caused the error. This will be the name shown to the
   // user, so if translation or substitution needs to take place, it needs to be
   // done beforehand.
@@ -33,7 +32,7 @@ export type ValidatorErrorItem = {
   type: ValidatorErrorType;
   // Params that can be passed to string translator
   params?: Dict;
-};
+}
 
 export type ValidationErrorStringCallback = (
   key: string,
@@ -44,7 +43,7 @@ export type ValidationErrorStringCallback = (
 export class ValidatorBase {
   protected _parent?: ValidatorBase;
   protected _result?: any;
-  protected _errors: ValidatorErrorItem[] = [];
+  protected _errors: IValidatorErrorItem[] = [];
 
   constructor(parent?: ValidatorBase) {
     this._parent = parent;
@@ -76,12 +75,12 @@ export class ValidatorBase {
     return this._errors.length ? true : false;
   }
 
-  // public addError(err: ValidatorErrorItem): this {
-  //   this._errors.push(err);
-  //   return this;
-  // }
+  public addErrorItem(err: IValidatorErrorItem): this {
+    this._errors.push(err);
+    return this;
+  }
 
-  public addErrors(errs: ValidatorErrorItem[]): this {
+  public addErrors(errs: IValidatorErrorItem[]): this {
     this._errors = this._errors.concat(errs);
     return this;
   }

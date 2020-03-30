@@ -1,5 +1,5 @@
 import { ValidatorRule, IsMissingCallback } from './validator-rule';
-import { ValidatorBase, ValidatorErrorType, ValidatorErrorItem } from './validator-base';
+import { ValidatorBase, ValidatorErrorType, IValidatorErrorItem } from './validator-base';
 import {
   isObject,
   isString,
@@ -37,11 +37,11 @@ const APPLY_METHOD: { [key: string]: string } = {
   array: 'arrayApply'
 };
 
-type PropertyValidity = {
+interface IPropertyValidity {
   present: Record<string, boolean>;
   notAllowed: Record<string, boolean>;
   missing: Record<string, boolean>;
-};
+}
 
 export class ValidatorItem extends ValidatorBase {
   protected _value: any;
@@ -67,12 +67,12 @@ export class ValidatorItem extends ValidatorBase {
     return this._name;
   }
 
-  chain(val: string | string[]): this {
+  public chain(val: string | string[]): this {
     this._chain = isString(val) ? [val] : val;
     return this;
   }
 
-  getChain(): string[] {
+  public getChain(): string[] {
     if (this._name) {
       if (this._chain && this._chain.length) {
         return [...this._chain, this._name];
@@ -90,7 +90,7 @@ export class ValidatorItem extends ValidatorBase {
     if (this._label) {
       return this._label;
     }
-    let result = this.getChain();
+    const result = this.getChain();
     return result ? result.join('.') : '?';
   }
 
@@ -119,8 +119,8 @@ export class ValidatorItem extends ValidatorBase {
     this._refDoc = val;
   }
 
-  addError(type: ValidatorErrorType, params?: Dict) {
-    let err = { key: this.label, type: type, params: params };
+  public addError(type: ValidatorErrorType, params?: Dict): this {
+    const err = { key: this.label, type, params };
     this._errors.push(err);
     return this;
   }
@@ -147,8 +147,9 @@ export class ValidatorItem extends ValidatorBase {
     return this.valueApply(rule);
   }
 
-  isMissing(rule: ValidatorRule): boolean {
+  public isMissing(rule: ValidatorRule): boolean {
     if (Array.isArray(rule.isMissing)) {
+      // tslint:disable-next-line: prefer-for-of
       for (let idx = 0; idx < rule.isMissing.length; ++idx) {
         if (this._value === rule.isMissing[idx]) {
           return true;
@@ -164,7 +165,7 @@ export class ValidatorItem extends ValidatorBase {
 
   protected setDefault(rule: ValidatorRule): this {
     if (isFunction(rule.default)) {
-      let val = rule.default(rule);
+      const val = rule.default(rule);
       return this.setResult(val);
     }
     let def = rule.default;
@@ -495,8 +496,8 @@ export class ValidatorItem extends ValidatorBase {
   protected propertiesApply(rule: ValidatorRule): this {
     if (rule.type === 'object') {
       if (rule.properties) {
-        let errors: ValidatorErrorItem[] = [];
-        let validity: PropertyValidity = this.checkPropertyValidity(rule);
+        let errors: IValidatorErrorItem[] = [];
+        const validity: IPropertyValidity = this.checkIPropertyValidity(rule);
         // console.log('validity', validity);
         if (
           true ||
@@ -542,20 +543,20 @@ export class ValidatorItem extends ValidatorBase {
     return this;
   }
 
-  protected checkPropertyValidity(rule: ValidatorRule): PropertyValidity {
-    let result: PropertyValidity = {
+  protected checkIPropertyValidity(rule: ValidatorRule): IPropertyValidity {
+    const result: IPropertyValidity = {
       present: {},
       notAllowed: {},
       missing: {}
     };
-    let val = this._value as Dict;
-    let ruleProps = rule.getProperties();
+    const val = this._value as Dict;
+    const ruleProps = rule.getProperties();
     Object.keys(val).forEach(key => {
       if (ruleProps && ruleProps[key]) {
         result.present[key] = true;
       } else if (rule.strict && !ruleProps[key].optional) {
         result.notAllowed[key] = true;
-        this._errors.push({ key: key, type: ValidatorErrorType.notAllowed });
+        this._errors.push({ key, type: ValidatorErrorType.notAllowed });
       } else {
         result.present[key] = true;
       }
@@ -566,7 +567,7 @@ export class ValidatorItem extends ValidatorBase {
           result.present[key] = true;
         } else {
           result.missing[key] = true;
-          this._errors.push({ key: key, type: ValidatorErrorType.missing });
+          this._errors.push({ key, type: ValidatorErrorType.missing });
         }
       }
     });

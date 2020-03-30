@@ -8,8 +8,8 @@ import { isObject, isString, isNonEmptyString, isDict, isRegExp } from 'epdoc-ut
 export type ValidatorCallback = (val: any, rule: ValidatorRule) => any;
 export type IsMissingCallback = (val: any) => boolean;
 
-export interface ValidatorRuleProps {
-  [key: string]: ValidatorRuleParams;
+export interface IValidatorRuleProps {
+  [key: string]: IValidatorRuleParams;
 }
 
 export enum ValidatorType {
@@ -27,7 +27,7 @@ export enum ValidatorType {
 /**
  * Parameters to validate a value.
  */
-export type ValidatorRuleParams = {
+export interface IValidatorRuleParams {
   name?: string;
   label?: string;
   type?: ValidatorType;
@@ -37,19 +37,19 @@ export type ValidatorRuleParams = {
   readonly min?: number;
   readonly max?: number;
   readonly sanitize?: boolean | string | ValidatorCallback;
-  required?: boolean | ValidatorRuleProps;
-  optional?: boolean | ValidatorRuleProps;
+  required?: boolean | IValidatorRuleProps;
+  optional?: boolean | IValidatorRuleProps;
   strict?: boolean;
   isMissing?: IsMissingCallback;
   // For objects, a list of properties that the object may contain
-  properties?: ValidatorRuleProps;
+  properties?: IValidatorRuleProps;
   // if an array, and itemType is specified, the entries must be of this type
   itemType?: string;
   // for arrays
   appendToArray?: boolean;
   // hook to allow value to be manipulated, eg converting 0/1 to false/true XXX use sanitize instead
   fromView?: ValueCallback;
-};
+}
 
 const FORMAT_LIBRARY = {
   email: /^(?:[a-zA-Z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-zA-Z0-9!#$%&'*+/=?^_`{|}~-]+)*|"(?:[\x01-\x08\x0b\x0c\x0e-\x1f\x21\x23-\x5b\x5d-\x7f]|\\[\x01-\x09\x0b\x0c\x0e-\x7f])*")@(?:(?:[a-zA-Z0-9](?:[a-zA-Z0-9-]*[a-zA-Z0-9])?\.)+[a-zA-Z0-9](?:[a-zA-Z0-9-]*[a-zA-Z0-9])?|\[(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?|[a-zA-Z0-9-]*[a-zA-Z0-9]:(?:[\x01-\x08\x0b\x0c\x0e-\x1f\x21-\x5a\x53-\x7f]|\\[\x01-\x09\x0b\x0c\x0e-\x7f])+)\])$/,
@@ -63,7 +63,7 @@ interface IValidatorRuleParamHack {
   [index: string]: any;
 }
 
-const RULE_LIBRARY: { [key: string]: ValidatorRuleParams } = {
+const RULE_LIBRARY: { [key: string]: IValidatorRuleParams } = {
   url: { type: ValidatorType.string, pattern: /^https?:\/\// },
   email: {
     type: ValidatorType.string,
@@ -94,8 +94,11 @@ const RULE_LIBRARY: { [key: string]: ValidatorRuleParams } = {
 };
 
 export class ValidatorRule {
+  public static isInstance(val: any): val is ValidatorRule {
+    return val && isDict(val) && val._isValidatorRule;
+  }
+
   // @ts-ignore
-  private _isValidatorRule: boolean = true;
   public name?: string;
   public label?: string;
   public type: ValidatorType = ValidatorType.string;
@@ -123,6 +126,8 @@ export class ValidatorRule {
     'any',
     'integer'
   ];
+  // @ts-ignore
+  private _isValidatorRule: boolean = true;
 
   /**
    * @param {Object|string} rule - The rule or a reference to a predefined rule
@@ -153,9 +158,9 @@ export class ValidatorRule {
    * as a push
    *
    */
-  constructor(rule: ValidatorRuleParams | string) {
+  constructor(rule: IValidatorRuleParams | string) {
     if (isObject(rule)) {
-      const r = rule as ValidatorRuleParams;
+      const r = rule as IValidatorRuleParams;
       Object.assign(this, r);
       if (isString(r.format) && RULE_LIBRARY[r.format as string]) {
         Object.assign(this, RULE_LIBRARY[r.format as string]);
@@ -173,10 +178,6 @@ export class ValidatorRule {
     }
   }
 
-  static isInstance(val: any): val is ValidatorRule {
-    return val && isDict(val) && val._isValidatorRule;
-  }
-
   public isValid() {
     if (!this.type) {
       return false;
@@ -185,6 +186,13 @@ export class ValidatorRule {
       return false;
     }
     return true;
+  }
+
+  public getProperties(): Record<string, ValidatorRule> {
+    if (isDict(this.properties)) {
+      return this.properties;
+    }
+    return {} as Record<string, ValidatorRule>;
   }
 
   private _fromLibrary(sRule: string) {
@@ -204,23 +212,16 @@ export class ValidatorRule {
     return this;
   }
 
-  public getProperties(): Record<string, ValidatorRule> {
-    if (isDict(this.properties)) {
-      return this.properties;
-    }
-    return {} as Record<string, ValidatorRule>;
-  }
-
   /**
    * Expand 'properties', 'required' and 'optional' generic objects into the
    * 'properties' generic object as a hash of key = ValidatorRule object.
    * @param {Object} rule - Generic object potentially with 'properties',
    * 'required' and 'optional' dictionaries
    */
-  private _recurse(rule: ValidatorRuleParams): this {
+  private _recurse(rule: IValidatorRuleParams): this {
     const props: ValidatorRule[] = [];
     if (isObject(rule.properties)) {
-      const p = rule.properties as { [key: string]: ValidatorRuleParams };
+      const p = rule.properties as { [key: string]: IValidatorRuleParams };
       Object.keys(p).forEach(key => {
         const subRule = new ValidatorRule(p[key]);
         props.push(subRule);

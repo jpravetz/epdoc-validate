@@ -1,6 +1,6 @@
 'use strict';
 Object.defineProperty(exports, '__esModule', { value: true });
-class ValidatorErrorItem {
+class IValidatorErrorItem {
   constructor(key, type, params = {}) {
     this.key = key;
     this.type = type;
@@ -10,5 +10,5 @@ class ValidatorErrorItem {
     return this.toString();
   }
 }
-exports.ValidatorErrorItem = ValidatorErrorItem;
+exports.IValidatorErrorItem = IValidatorErrorItem;
 //# sourceMappingURL=validator-error.js.map
