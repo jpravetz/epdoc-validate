@@ -1,0 +1,51 @@
+{
+  "description": "Ignore data",
+  "rule": {
+    "type": "object",
+    "required": true,
+    "only": true,
+    "properties": {
+      "tiger": {
+        "type": "object",
+        "required": true,
+        "only": true,
+        "properties": {
+          "key": { "type": "string", "required": true },
+          "my_credentials": { "type": "object", "optional": true }
+        }
+      },
+      "cat": { "type": "array", "itemType": { "type": "object" } }
+    }
+  },
+  "errors": [],
+  "response": {
+    "tiger": {
+      "cn": "example response",
+      "key": "mykey",
+      "other": "ignore me",
+      "my_credentials": {
+        "8": {
+          "api_key": "7987234908udwfljpoqweufjoiwqefw"
+        },
+        "18": { "api_key": "joqiewufoiajeoife" },
+        "another": "do not ignore"
+      },
+      "started": "2018-11-27T23:36:20.361888"
+    },
+    "cat": [{ "a": "b" }],
+    "lion": "string"
+  },
+  "expected": {
+    "tiger": {
+      "key": "mykey",
+      "my_credentials": {
+        "8": {
+          "api_key": "7987234908udwfljpoqweufjoiwqefw"
+        },
+        "18": { "api_key": "joqiewufoiajeoife" },
+        "another": "do not ignore"
+      }
+    },
+    "cat": [{ "a": "b" }]
+  }
+}

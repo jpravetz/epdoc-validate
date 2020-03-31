@@ -167,12 +167,15 @@ Experimental Values (may be deprecated):
     - a value
     - a function that is called with value, `ValidatorRule`
 
-#### strict, required, optional
+#### strict, required, optional, only
 
 - When setting `strict`, only those properties that are marked as `required` or
   `optional` are allowed on an object
   - As an example, if `strict` is true and no default is set, and the value is
     not set, then a _missing property_ error will be registered.
+- When setting `only`, only those properties that are listed are allowed on an object
+- `strict` takes precedence over `only`, so it does not make sense to use these
+  together.
 
 ### sanitize
 

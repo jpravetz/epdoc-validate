@@ -1,6 +1,6 @@
 {
   "name": "epdoc-validate",
-  "version": "1.0.2-beta.15",
+  "version": "1.0.2-beta.16",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "license": "UNLICENSED",

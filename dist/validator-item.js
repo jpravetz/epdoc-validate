@@ -457,6 +457,7 @@ class ValidatorItem extends validator_base_1.ValidatorBase {
         const result = {
             present: {},
             notAllowed: {},
+            ignore: {},
             missing: {}
         };
         const val = this._value;
@@ -465,9 +466,12 @@ class ValidatorItem extends validator_base_1.ValidatorBase {
             if (ruleProps && ruleProps[key]) {
                 result.present[key] = true;
             }
-            else if (rule.strict && !ruleProps[key].optional) {
+            else if (rule.strict && (!ruleProps[key] || !ruleProps[key].optional)) {
                 result.notAllowed[key] = true;
                 this._errors.push({ key, type: validator_base_1.ValidatorErrorType.notAllowed });
+            }
+            else if (rule.only && (!ruleProps[key] || !ruleProps[key].optional)) {
+                result.ignore[key] = true;
             }
             else {
                 result.present[key] = true;

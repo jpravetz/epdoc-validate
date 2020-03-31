@@ -40,6 +40,7 @@ const APPLY_METHOD: { [key: string]: string } = {
 interface IPropertyValidity {
   present: Record<string, boolean>;
   notAllowed: Record<string, boolean>;
+  ignore: Record<string, boolean>;
   missing: Record<string, boolean>;
 }
 
@@ -547,6 +548,7 @@ export class ValidatorItem extends ValidatorBase {
     const result: IPropertyValidity = {
       present: {},
       notAllowed: {},
+      ignore: {},
       missing: {}
     };
     const val = this._value as Dict;
@@ -554,9 +556,11 @@ export class ValidatorItem extends ValidatorBase {
     Object.keys(val).forEach(key => {
       if (ruleProps && ruleProps[key]) {
         result.present[key] = true;
-      } else if (rule.strict && !ruleProps[key].optional) {
+      } else if (rule.strict && (!ruleProps[key] || !ruleProps[key].optional)) {
         result.notAllowed[key] = true;
         this._errors.push({ key, type: ValidatorErrorType.notAllowed });
+      } else if (rule.only && (!ruleProps[key] || !ruleProps[key].optional)) {
+        result.ignore[key] = true;
       } else {
         result.present[key] = true;
       }

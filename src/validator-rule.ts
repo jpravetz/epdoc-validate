@@ -117,6 +117,7 @@ export class ValidatorRule {
   public required?: boolean;
   public optional?: boolean;
   public strict?: boolean;
+  public only?: boolean;
   public isMissing?: IsMissingCallback;
   public properties?: Record<string, ValidatorRule>;
   public itemType?: any; // if an array, the entries must be of this type
