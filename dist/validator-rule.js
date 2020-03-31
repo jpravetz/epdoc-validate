@@ -90,7 +90,7 @@ class ValidatorRule {
         if (!this.type) {
             return false;
         }
-        if (this.pattern && !epdoc_util_1.isRegExp(this.pattern)) {
+        if (this.pattern && !epdoc_util_1.isRegExp(this.pattern) && !epdoc_util_1.isFunction(this.pattern)) {
             return false;
         }
         return true;

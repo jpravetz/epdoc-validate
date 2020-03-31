@@ -1,5 +1,12 @@
 import { ValueCallback } from './validator-base';
-import { isObject, isString, isNonEmptyString, isDict, isRegExp } from 'epdoc-util';
+import {
+  isObject,
+  isString,
+  isNonEmptyString,
+  isDict,
+  isRegExp,
+  isFunction
+} from 'epdoc-util';
 
 /**
  * Callback to process a value. This function signature is used by the pattern,
@@ -182,7 +189,7 @@ export class ValidatorRule {
     if (!this.type) {
       return false;
     }
-    if (this.pattern && !isRegExp(this.pattern)) {
+    if (this.pattern && !isRegExp(this.pattern) && !isFunction(this.pattern)) {
       return false;
     }
     return true;

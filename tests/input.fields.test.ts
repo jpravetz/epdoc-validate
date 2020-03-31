@@ -29,7 +29,9 @@ const valRules: { [key: string]: IValidatorRuleParams } = {
   external_id: {
     name: 'external_id',
     label: 'External ID',
-    pattern: /^.*$/,
+    pattern: val => {
+      return true;
+    },
     min: 1,
     max: 128,
     default: 'undefined'
