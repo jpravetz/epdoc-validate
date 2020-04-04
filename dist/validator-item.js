@@ -458,7 +458,8 @@ class ValidatorItem extends validator_base_1.ValidatorBase {
             present: {},
             notAllowed: {},
             ignore: {},
-            missing: {}
+            missing: {},
+            defaults: {}
         };
         const val = this._value;
         const ruleProps = rule.getProperties();
@@ -478,11 +479,11 @@ class ValidatorItem extends validator_base_1.ValidatorBase {
             }
         });
         Object.keys(ruleProps).forEach(key => {
-            if ((ruleProps[key].required || rule.strict) && !result.present[key]) {
+            if (!result.present[key]) {
                 if (ruleProps[key].default) {
                     result.present[key] = true;
                 }
-                else {
+                else if (ruleProps[key].required || rule.strict) {
                     result.missing[key] = true;
                     this._errors.push({ key, type: validator_base_1.ValidatorErrorType.missing });
                 }

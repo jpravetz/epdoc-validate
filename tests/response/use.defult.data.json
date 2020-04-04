@@ -1,0 +1,30 @@
+{
+  "description": "only default",
+  "rule": {
+    "type": "object",
+    "only": true,
+    "properties": {
+      "tiger": {
+        "type": "object",
+        "only": true,
+        "properties": {
+          "stack": { "type": "number", "default": 15 },
+          "length": { "type": "number", "default": 40 }
+        }
+      }
+    }
+  },
+  "errors": [],
+  "expected": {
+    "tiger": {
+      "stack": 42,
+      "length": 40
+    }
+  },
+  "response": {
+    "tiger": {
+      "extra": 9,
+      "stack": 42
+    }
+  }
+}
