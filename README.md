@@ -173,9 +173,11 @@ Experimental Values (may be deprecated):
   `optional` are allowed on an object
   - As an example, if `strict` is true and no default is set, and the value is
     not set, then a _missing property_ error will be registered.
-- When setting `only`, only those properties that are listed are allowed on an object
-- `strict` takes precedence over `only`, so it does not make sense to use these
-  together.
+- When setting `only`, only those properties that are listed are allowed on an
+  object, and other properties are ignored. Missiong properties are also
+  ignored, unless a `default` is set.
+- `strict` takes precedence over `only`, for forward compatibility do not use
+  these together.
 
 ### sanitize
 
