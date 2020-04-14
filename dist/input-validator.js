@@ -55,8 +55,10 @@ class InputValidator extends validator_base_1.ValidatorBase {
         if (passed) {
             if (this._refDoc) {
                 if (!epdoc_util_1.deepEquals(this._itemValidator.output, this._refDoc[this._name])) {
-                    this._changes[this._name] = this
-                        ._itemValidator.output;
+                    const name = epdoc_util_1.isString(this._name)
+                        ? this._name
+                        : this._itemValidator.getName();
+                    this._changes[name] = this._itemValidator.output;
                 }
             }
             else {

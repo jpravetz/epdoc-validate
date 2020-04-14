@@ -2,7 +2,7 @@ import { ValidatorBase, IValidator, ValueCallback } from './validator-base';
 import { ValidatorItemInput } from './validator-item-input';
 import { ValidatorRule, IValidatorRuleParams } from './validator-rule';
 import { ValidatorItem } from './validator-item';
-import { Dict, deepEquals } from 'epdoc-util';
+import { Dict, deepEquals, isString } from 'epdoc-util';
 
 /**
  * Intended for the purpose of gathering values from UI,  dcomparing them against
@@ -87,8 +87,10 @@ export class InputValidator extends ValidatorBase implements IValidator {
             (this._refDoc as Dict)[this._name as string]
           )
         ) {
-          (this._changes as Dict)[this._name as string] = (this
-            ._itemValidator as ValidatorItem).output;
+          const name: string = isString(this._name)
+            ? this._name
+            : ((this._itemValidator as ValidatorItem).getName() as string);
+          (this._changes as Dict)[name] = (this._itemValidator as ValidatorItem).output;
         }
       } else {
         const name: string = (this._itemValidator as ValidatorItem).getName() as string;
