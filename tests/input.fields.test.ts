@@ -66,7 +66,7 @@ describe('input', () => {
   describe('fields', () => {
     it('pass', () => {
       let changes: Dict = {};
-      let data: Dict = {
+      const data: Dict = {
         name: 'Bob Smith',
         email: 'bob@smith.com',
         username: undefined,
@@ -77,6 +77,15 @@ describe('input', () => {
         source: null,
         source_other: null
       };
+      const expected: Dict = {
+        name: 'Bob Smith',
+        email: 'bob@smith.com',
+        username: undefined,
+        external_id: 'provider_id:123455',
+        company: 'Acme',
+        esp_id: undefined,
+        privilege: undefined
+      };
       let validator = new InputValidator(changes);
       FIELDS.forEach(field => {
         if (valRules[field]) {
@@ -86,6 +95,7 @@ describe('input', () => {
       expect(validator.errors).toStrictEqual([]);
       expect(validator.errors.length).toBe(0);
       expect(validator.hasErrors()).toBe(false);
+      expect(changes).toStrictEqual(expected);
     });
   });
 });

@@ -15,7 +15,7 @@ import { Dict, deepEquals } from 'epdoc-util';
  * they are only added if there is a diff to the reference doc.
  */
 export class InputValidator extends ValidatorBase implements IValidator {
-  _itemValidator?: ValidatorItem;
+  public _itemValidator?: ValidatorItem;
   protected _changes: Dict;
   protected _refDoc?: Dict;
   protected _name?: string;
