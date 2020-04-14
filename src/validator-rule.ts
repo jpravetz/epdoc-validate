@@ -1,4 +1,3 @@
-import { ValueCallback } from './validator-base';
 import {
   isObject,
   isString,
@@ -10,7 +9,7 @@ import {
 
 /**
  * Callback to process a value. This function signature is used by the pattern,
- * sanitize and fromView callbacks.
+ * and sanitize callbacks.
  */
 export type ValidatorCallback = (val: any, rule: ValidatorRule) => any;
 export type IsMissingCallback = (val: any) => boolean;
@@ -54,8 +53,6 @@ export interface IValidatorRuleParams {
   itemType?: string;
   // for arrays
   appendToArray?: boolean;
-  // hook to allow value to be manipulated, eg converting 0/1 to false/true XXX use sanitize instead
-  fromView?: ValueCallback;
 }
 
 const FORMAT_LIBRARY = {
@@ -122,7 +119,6 @@ export class ValidatorRule {
   public properties?: Record<string, ValidatorRule>;
   public itemType?: any; // if an array, the entries must be of this type
   public appendToArray?: boolean; // for arrays
-  public fromView?: ValueCallback; // hook to allow value to be manipulated, eg converting 0/1 to false/true XXX use sanitize instead
   public readonly validRules = [
     'string',
     'number',

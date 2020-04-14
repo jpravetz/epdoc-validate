@@ -254,21 +254,21 @@ class ValidatorItem extends validator_base_1.ValidatorBase {
         return this.setResult(val);
     }
     numberApply(val, rule) {
+        if (epdoc_util_1.isFunction(rule.sanitize)) {
+            val = rule.sanitize(val, rule);
+            return this.applyNumberLimitTests(val, rule);
+        }
+        if (rule.sanitize === true) {
+            val = Math.round(val);
+            return this.applyNumberLimitTests(val, rule);
+        }
+        if (epdoc_util_1.isString(rule.sanitize) && epdoc_util_1.isFunction(Math[rule.sanitize])) {
+            val = Math[rule.sanitize](val);
+            return this.applyNumberLimitTests(val, rule);
+        }
         const isInt = REGEX.integer.test(rule.type);
         if (epdoc_util_1.isNumber(val)) {
             if (isInt) {
-                if (epdoc_util_1.isFunction(rule.sanitize)) {
-                    val = rule.sanitize(val, rule);
-                    return this.applyNumberLimitTests(val, rule);
-                }
-                if (rule.sanitize === true) {
-                    val = Math.round(val);
-                    return this.applyNumberLimitTests(val, rule);
-                }
-                if (epdoc_util_1.isString(rule.sanitize) && epdoc_util_1.isFunction(Math[rule.sanitize])) {
-                    val = Math[rule.sanitize](val);
-                    return this.applyNumberLimitTests(val, rule);
-                }
                 if (Math.round(val) !== val) {
                     return this.addError(validator_base_1.ValidatorErrorType.invalid);
                 }

@@ -1,4 +1,4 @@
-import { ValidatorType } from './../src/validator-rule';
+import { ValidatorType, ValidatorRule } from './../src/validator-rule';
 import { InputValidator } from '../src/input-validator';
 import { Dict } from 'epdoc-util';
 
@@ -21,6 +21,15 @@ describe('input', () => {
         max: 100,
         strict: true,
         required: true
+      },
+      integer4: {
+        name: 'f',
+        type: ValidatorType.integer,
+        strict: true,
+        required: true,
+        sanitize: (val: any, rule: ValidatorRule) => {
+          return val === true || val === 'true' ? 1 : 0;
+        }
       },
       number5: {
         type: ValidatorType.number,
@@ -143,6 +152,39 @@ describe('input', () => {
         expect(validator.hasErrors()).toBe(false);
         expect(changes.a).toBe(Math.round(anum));
         expect(changes.b).toBe(Math.round(bnum));
+      });
+
+      it('valid sanitize', () => {
+        let changes: Dict = {};
+        let anum = 'true';
+        let bnum = true;
+        let cnum = 'false';
+        let dnum = false;
+        let fnum = 'whatever';
+        let validator = new InputValidator(changes);
+        validator
+          .input(anum)
+          .name('a')
+          .validate(RULE.integer4);
+        validator
+          .input(bnum)
+          .name('b')
+          .validate(RULE.integer4);
+        validator
+          .input(cnum)
+          .name('c')
+          .validate(RULE.integer4);
+        validator
+          .input(dnum)
+          .name('d')
+          .validate(RULE.integer4);
+        validator.input(fnum).validate(RULE.integer4);
+        expect(validator.hasErrors()).toBe(false);
+        expect(changes.a).toBe(1);
+        expect(changes.b).toBe(1);
+        expect(changes.c).toBe(0);
+        expect(changes.d).toBe(0);
+        expect(changes.f).toBe(0);
       });
 
       it('optional pass', () => {

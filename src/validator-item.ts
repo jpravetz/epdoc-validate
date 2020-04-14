@@ -335,23 +335,23 @@ export class ValidatorItem extends ValidatorBase {
    * @param {*} val
    */
   protected numberApply(val: any, rule: ValidatorRule): ValidatorItem {
+    if (isFunction(rule.sanitize)) {
+      val = rule.sanitize(val, rule);
+      return this.applyNumberLimitTests(val, rule);
+    }
+    if (rule.sanitize === true) {
+      val = Math.round(val);
+      return this.applyNumberLimitTests(val, rule);
+    }
+    // @ts-ignore
+    if (isString(rule.sanitize) && isFunction(Math[rule.sanitize])) {
+      // @ts-ignore
+      val = Math[rule.sanitize](val);
+      return this.applyNumberLimitTests(val, rule);
+    }
     const isInt: boolean = REGEX.integer.test(rule.type);
     if (isNumber(val)) {
       if (isInt) {
-        if (isFunction(rule.sanitize)) {
-          val = rule.sanitize(val, rule);
-          return this.applyNumberLimitTests(val, rule);
-        }
-        if (rule.sanitize === true) {
-          val = Math.round(val);
-          return this.applyNumberLimitTests(val, rule);
-        }
-        // @ts-ignore
-        if (isString(rule.sanitize) && isFunction(Math[rule.sanitize])) {
-          // @ts-ignore
-          val = Math[rule.sanitize](val);
-          return this.applyNumberLimitTests(val, rule);
-        }
         if (Math.round(val) !== val) {
           return this.addError(ValidatorErrorType.invalid);
         }
