@@ -584,7 +584,7 @@ export class ValidatorItem extends ValidatorBase {
     // console.log('arrayApply', val, rule);
     if (Array.isArray(val)) {
       this._result = [];
-      if (rule.itemType) {
+      if (isString(rule.itemType)) {
         this._result = [];
         for (let idx = 0; idx < val.length; ++idx) {
           const v = val[idx];
@@ -600,7 +600,7 @@ export class ValidatorItem extends ValidatorBase {
             if (item.hasErrors()) {
               this._errors.concat(item.errors);
             } else {
-              this._result.push(item.output);
+              this._result.push(v);
             }
           } catch (err) {
             this._errors.push(err);

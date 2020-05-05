@@ -9,7 +9,8 @@
         "required": true,
         "properties": {
           "mykey": { "type": "string", "required": true },
-          "videos": { "type": "array", "optional": true, "itemType": "object" }
+          "videos": { "type": "array", "optional": true, "itemType": "object" },
+          "strings": { "type": "array", "required": true, "itemType": "string" }
         }
       }
     }
@@ -29,131 +30,132 @@
       "subscription_started": "2018-11-27T23:36:20.361888",
       "current_license": null,
       "plays_month": 0,
-      "current_billing_period": "27Dec2019-26Jan2020"
-    },
-    "videos": [
-      {
-        "analytics_updated": "2019-06-21T19:16:38.794775",
-        "sends": 0,
-        "campaign_id": null,
-        "height": 600,
-        "states": {},
-        "analytics": {
-          "total": { "unique": { "open": 0, "click": 0 }, "billable": { "open": 0 } }
-        },
-        "aspect": "1:1",
-        "loop": 0,
-        "alt": null,
-        "created": "2019-06-21T19:16:38.794785",
-        "languages": {},
-        "beacons": [],
-        "mab_solved": null,
-        "other_random_data": {
-          "super": [
-            {
-              "ingredient": "shots",
-              "title": "Tempo Ramp",
-              "params": {
-                "sort": "d",
-                "files": [{ "role": "source", "file_id": 1234123 }],
-                "reverse": true,
-                "cap": 1,
-                "duration": 12,
-                "target": { "width": 600, "height": 600 }
+      "strings": ["string1", "string2"],
+      "current_billing_period": "27Dec2019-26Jan2020",
+      "videos": [
+        {
+          "analytics_updated": "2019-06-21T19:16:38.794775",
+          "sends": 0,
+          "campaign_id": null,
+          "height": 600,
+          "states": {},
+          "analytics": {
+            "total": { "unique": { "open": 0, "click": 0 }, "billable": { "open": 0 } }
+          },
+          "aspect": "1:1",
+          "loop": 0,
+          "alt": null,
+          "created": "2019-06-21T19:16:38.794785",
+          "languages": {},
+          "beacons": [],
+          "mab_solved": null,
+          "other_random_data": {
+            "super": [
+              {
+                "ingredient": "shots",
+                "title": "Tempo Ramp",
+                "params": {
+                  "sort": "d",
+                  "files": [{ "role": "source", "file_id": 1234123 }],
+                  "reverse": true,
+                  "cap": 1,
+                  "duration": 12,
+                  "target": { "width": 600, "height": 600 }
+                }
+              },
+              {
+                "ingredient": "shots",
+                "title": "Movement Ramp",
+                "params": {
+                  "sort": "ma",
+                  "files": [{ "role": "source", "file_id": 12312 }],
+                  "reverse": true,
+                  "cap": 3,
+                  "duration": 12,
+                  "order": "desc",
+                  "target": { "width": 600, "height": 600 }
+                }
+              },
+              {
+                "ingredient": "slowmo",
+                "title": "Slow %(label)s",
+                "params": {
+                  "sort": "mt",
+                  "files": [{ "role": "source", "file_id": 12312 }],
+                  "reverse": true,
+                  "cap": 5,
+                  "duration": 12,
+                  "order": "desc",
+                  "target": { "width": 600, "height": 600 }
+                }
+              },
+              {
+                "ingredient": "face",
+                "title": "Face %(face_id)s",
+                "params": {
+                  "duration": 15,
+                  "files": [{ "role": "source", "file_id": 12123123 }],
+                  "cap": 5,
+                  "target": { "width": 600, "height": 600 }
+                }
+              },
+              {
+                "ingredient": "label",
+                "title": "%(label)s",
+                "params": {
+                  "duration": 15,
+                  "files": [{ "role": "source", "file_id": 123123 }],
+                  "cap": 5,
+                  "target": { "width": 600, "height": 600 }
+                }
+              },
+              {
+                "ingredient": "cluster",
+                "title": "%(cluster)s",
+                "params": {
+                  "duration": 15,
+                  "files": [{ "role": "source", "file_id": 12312321 }],
+                  "cap": 5,
+                  "target": { "width": 600, "height": 600 }
+                }
+              },
+              {
+                "ingredient": "shots",
+                "title": "From Darkness",
+                "params": {
+                  "sort": "ba",
+                  "duration": 15,
+                  "cap": 5,
+                  "target": { "width": 600, "height": 600 },
+                  "files": [{ "role": "source", "file_id": 123123 }]
+                }
               }
-            },
-            {
-              "ingredient": "shots",
-              "title": "Movement Ramp",
-              "params": {
-                "sort": "ma",
-                "files": [{ "role": "source", "file_id": 12312 }],
-                "reverse": true,
-                "cap": 3,
-                "duration": 12,
-                "order": "desc",
-                "target": { "width": 600, "height": 600 }
-              }
-            },
-            {
-              "ingredient": "slowmo",
-              "title": "Slow %(label)s",
-              "params": {
-                "sort": "mt",
-                "files": [{ "role": "source", "file_id": 12312 }],
-                "reverse": true,
-                "cap": 5,
-                "duration": 12,
-                "order": "desc",
-                "target": { "width": 600, "height": 600 }
-              }
-            },
-            {
-              "ingredient": "face",
-              "title": "Face %(face_id)s",
-              "params": {
-                "duration": 15,
-                "files": [{ "role": "source", "file_id": 12123123 }],
-                "cap": 5,
-                "target": { "width": 600, "height": 600 }
-              }
-            },
-            {
-              "ingredient": "label",
-              "title": "%(label)s",
-              "params": {
-                "duration": 15,
-                "files": [{ "role": "source", "file_id": 123123 }],
-                "cap": 5,
-                "target": { "width": 600, "height": 600 }
-              }
-            },
-            {
-              "ingredient": "cluster",
-              "title": "%(cluster)s",
-              "params": {
-                "duration": 15,
-                "files": [{ "role": "source", "file_id": 12312321 }],
-                "cap": 5,
-                "target": { "width": 600, "height": 600 }
-              }
-            },
-            {
-              "ingredient": "shots",
-              "title": "From Darkness",
-              "params": {
-                "sort": "ba",
-                "duration": 15,
-                "cap": 5,
-                "target": { "width": 600, "height": 600 },
-                "files": [{ "role": "source", "file_id": 123123 }]
-              }
-            }
-          ]
-        },
-        "files": [{ "role": "source", "file_id": 234314333 }],
-        "snippet_params": { "usertoken": "%%subscriberid%%", "esp_id": "1" },
-        "updated": "2019-12-04T21:28:14.128425",
-        "account_id": 23432333,
-        "focus": {
-          "gender": "male",
-          "age": { "max": 65, "min": 18 },
-          "labels": [],
-          "channels": "email",
-          "location": "US",
-          "faces": [],
-          "clusters": ["cluster-0", "cluster-1"]
-        },
-        "native_variants": {},
-        "peak_ops_updated": "2019-06-21T19:16:38.794793",
-        "ux_state": { "variations_updated": 234333 },
-        "auto_height": true,
-        "email_parse_key": "1234333aasdfasd",
-        "interaction": "url",
-        "footer": null,
-        "versions": {},
-        "width": 600
-      }
-    ]
+            ]
+          },
+          "files": [{ "role": "source", "file_id": 234314333 }],
+          "snippet_params": { "usertoken": "%%subscriberid%%", "esp_id": "1" },
+          "updated": "2019-12-04T21:28:14.128425",
+          "account_id": 23432333,
+          "focus": {
+            "gender": "male",
+            "age": { "max": 65, "min": 18 },
+            "labels": [],
+            "channels": "email",
+            "location": "US",
+            "faces": [],
+            "clusters": ["cluster-0", "cluster-1"]
+          },
+          "native_variants": {},
+          "peak_ops_updated": "2019-06-21T19:16:38.794793",
+          "ux_state": { "variations_updated": 234333 },
+          "auto_height": true,
+          "email_parse_key": "1234333aasdfasd",
+          "interaction": "url",
+          "footer": null,
+          "versions": {},
+          "width": 600
+        }
+      ]
+    }
   }
 }

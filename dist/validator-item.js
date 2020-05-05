@@ -494,7 +494,7 @@ class ValidatorItem extends validator_base_1.ValidatorBase {
     arrayApply(val, rule) {
         if (Array.isArray(val)) {
             this._result = [];
-            if (rule.itemType) {
+            if (epdoc_util_1.isString(rule.itemType)) {
                 this._result = [];
                 for (let idx = 0; idx < val.length; ++idx) {
                     const v = val[idx];
@@ -509,7 +509,8 @@ class ValidatorItem extends validator_base_1.ValidatorBase {
                             this._errors.concat(item.errors);
                         }
                         else {
-                            this._result.push(item.output);
+                            console.log('adding array item', v);
+                            this._result.push(v);
                         }
                     }
                     catch (err) {
