@@ -72,6 +72,11 @@ export class ValidatorBase {
     return this._errors;
   }
 
+  public clearErrors(): this {
+    this._errors = [];
+    return this;
+  }
+
   public hasErrors(): boolean {
     return this._errors.length ? true : false;
   }

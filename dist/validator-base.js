@@ -36,6 +36,10 @@ class ValidatorBase {
     get errors() {
         return this._errors;
     }
+    clearErrors() {
+        this._errors = [];
+        return this;
+    }
     hasErrors() {
         return this._errors.length ? true : false;
     }
