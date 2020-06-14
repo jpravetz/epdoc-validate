@@ -1,6 +1,16 @@
-import { IValidatorRuleParams, ValidatorType } from './../src/validator-rule';
 import { Dict } from 'epdoc-util';
 import { InputValidator } from '../src/input-validator';
+import {
+  IValidatorRuleParams,
+  ValidatorRuleLibrary,
+  ValidatorType
+} from './../src/validator-rule';
+
+const externalLibrary: ValidatorRuleLibrary = {
+  username: { type: ValidatorType.string, pattern: /^[a-z0-9]{2,}$/ },
+  fullname: { type: ValidatorType.string, pattern: /^.+$/ },
+  title: { type: ValidatorType.string, pattern: /^.+$/ }
+};
 
 const valRules: { [key: string]: IValidatorRuleParams } = {
   email: {
@@ -87,6 +97,7 @@ describe('input', () => {
         privilege: undefined
       };
       let validator = new InputValidator(changes);
+      validator.addRuleLibrary(externalLibrary);
       FIELDS.forEach(field => {
         if (valRules[field]) {
           validator.input(data[field]).validate(valRules[field]);

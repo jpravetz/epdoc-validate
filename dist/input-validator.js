@@ -1,9 +1,9 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+const epdoc_util_1 = require("epdoc-util");
 const validator_base_1 = require("./validator-base");
 const validator_item_input_1 = require("./validator-item-input");
 const validator_rule_1 = require("./validator-rule");
-const epdoc_util_1 = require("epdoc-util");
 class InputValidator extends validator_base_1.ValidatorBase {
     constructor(changes = {}) {
         super();
@@ -46,7 +46,7 @@ class InputValidator extends validator_base_1.ValidatorBase {
         const rules = Array.isArray(rule) ? rule : [rule];
         let passed = false;
         for (let idx = 0; idx < rules.length && !passed; ++idx) {
-            const validatorRule = new validator_rule_1.ValidatorRule(rules[idx]);
+            const validatorRule = new validator_rule_1.ValidatorRule(rules[idx], this._externalLibrary);
             this._itemValidator.validate(validatorRule);
             if (!this._itemValidator.hasErrors()) {
                 passed = true;

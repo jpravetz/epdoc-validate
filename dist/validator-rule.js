@@ -14,11 +14,7 @@ var ValidatorType;
     ValidatorType["integer"] = "integer";
 })(ValidatorType = exports.ValidatorType || (exports.ValidatorType = {}));
 const FORMAT_LIBRARY = {
-    email: /^(?:[a-zA-Z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-zA-Z0-9!#$%&'*+/=?^_`{|}~-]+)*|"(?:[\x01-\x08\x0b\x0c\x0e-\x1f\x21\x23-\x5b\x5d-\x7f]|\\[\x01-\x09\x0b\x0c\x0e-\x7f])*")@(?:(?:[a-zA-Z0-9](?:[a-zA-Z0-9-]*[a-zA-Z0-9])?\.)+[a-zA-Z0-9](?:[a-zA-Z0-9-]*[a-zA-Z0-9])?|\[(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?|[a-zA-Z0-9-]*[a-zA-Z0-9]:(?:[\x01-\x08\x0b\x0c\x0e-\x1f\x21-\x5a\x53-\x7f]|\\[\x01-\x09\x0b\x0c\x0e-\x7f])+)\])$/,
-    dimension: /^\d[1,4]$/,
-    filename: /^[^\/]+$/,
-    password: /^.{6,}$/,
-    globalPerm: /^(none|globalView|globalAdmin)$/
+    email: /^(?:[a-zA-Z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-zA-Z0-9!#$%&'*+/=?^_`{|}~-]+)*|"(?:[\x01-\x08\x0b\x0c\x0e-\x1f\x21\x23-\x5b\x5d-\x7f]|\\[\x01-\x09\x0b\x0c\x0e-\x7f])*")@(?:(?:[a-zA-Z0-9](?:[a-zA-Z0-9-]*[a-zA-Z0-9])?\.)+[a-zA-Z0-9](?:[a-zA-Z0-9-]*[a-zA-Z0-9])?|\[(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?|[a-zA-Z0-9-]*[a-zA-Z0-9]:(?:[\x01-\x08\x0b\x0c\x0e-\x1f\x21-\x5a\x53-\x7f]|\\[\x01-\x09\x0b\x0c\x0e-\x7f])+)\])$/
 };
 const RULE_LIBRARY = {
     url: { type: ValidatorType.string, pattern: /^https?:\/\// },
@@ -29,28 +25,12 @@ const RULE_LIBRARY = {
             return String(v);
         }
     },
-    dimension: { type: ValidatorType.string, pattern: FORMAT_LIBRARY.dimension },
-    aspect: { type: ValidatorType.string, pattern: /^\d+:\d+$/ },
-    title: { type: ValidatorType.string, pattern: /^.+$/ },
-    filename: { type: ValidatorType.string, pattern: FORMAT_LIBRARY.filename },
-    fullname: { type: ValidatorType.string, pattern: /^.+$/ },
-    company: { type: ValidatorType.string, pattern: /^.+$/ },
-    subject: { type: ValidatorType.string, pattern: /^.+$/ },
-    description: { type: ValidatorType.string, pattern: /^.+$/ },
-    password: { type: ValidatorType.string, pattern: FORMAT_LIBRARY.password },
-    label: { type: ValidatorType.string, pattern: /^[a-zA-Z\-\.\s]+$/ },
-    username: { type: ValidatorType.string, pattern: /^[a-z0-9]{2,}$/ },
-    interaction: { type: ValidatorType.string, pattern: /^(none|url|clickplay)$/ },
-    globalPerm: { type: ValidatorType.string, pattern: FORMAT_LIBRARY.globalPerm },
-    streamStatus: { type: ValidatorType.string, pattern: /^(upcoming|live|completed)$/ },
-    usertoken: { type: ValidatorType.string, pattern: /^.*$/ },
-    externalId: { type: ValidatorType.string, pattern: /^.*$/ },
     posInt: { type: ValidatorType.string, pattern: /^\d+$/, sanitize: 'integer' },
     posIntAsString: { type: ValidatorType.string, pattern: /^\d+$/, sanitize: 'string' },
     signedInt: { type: ValidatorType.string, pattern: /^(\+|-)?\d+$/, sanitize: 'integer' }
 };
 class ValidatorRule {
-    constructor(rule) {
+    constructor(rule, externalLibrary = {}) {
         this.type = ValidatorType.string;
         this.validRules = [
             'string',
@@ -67,13 +47,13 @@ class ValidatorRule {
         if (epdoc_util_1.isObject(rule)) {
             const r = rule;
             Object.assign(this, r);
-            if (epdoc_util_1.isString(r.format) && RULE_LIBRARY[r.format]) {
-                Object.assign(this, RULE_LIBRARY[r.format]);
+            if (epdoc_util_1.isString(r.format)) {
+                this._fromLibrary(r.format, externalLibrary);
             }
             this._recurse(r);
         }
         else if (epdoc_util_1.isNonEmptyString(rule)) {
-            this._fromLibrary(rule);
+            this._fromLibrary(rule, externalLibrary);
         }
         this.label = this.label ? this.label : this.name;
         if (!this.type && epdoc_util_1.isRegExp(this.pattern)) {
@@ -101,8 +81,11 @@ class ValidatorRule {
         }
         return {};
     }
-    _fromLibrary(sRule) {
-        if (RULE_LIBRARY[sRule]) {
+    _fromLibrary(sRule, externalLibrary) {
+        if (externalLibrary[sRule]) {
+            Object.assign(this, externalLibrary[sRule]);
+        }
+        else if (RULE_LIBRARY[sRule]) {
             Object.assign(this, RULE_LIBRARY[sRule]);
         }
         else {

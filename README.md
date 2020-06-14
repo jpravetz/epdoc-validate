@@ -8,6 +8,7 @@ Validation module validates individual values or properties of an object.
 - Options for `strict` checking, with `required` and `optional` properties
 - Recursively handles objects with properties
 - Supports pre-canned validators for url, email, etc
+- Reference your own pre-canned validator rules
 - Supports a sanitizer callback function
 - Reports on all errors, not stopping at first error
 - Attempts to build output even if errors are encountered
@@ -98,7 +99,7 @@ converted into a `ValidatorRule` object internally within this module.
   describe the input
 - `type` ValidatorType or array of ValidatorType or strings separated by '|', (_required_). Defaults to `string` if pattern is a RegExp.
   must be one of the primitive types listed below
-- `format` string - (_optional_) can be used to specify a predefined format
+- `format` string - (_optional_) can be used to specify a predefined rule (e.g. `email`)
 - `pattern` RegExp or Function - (_optional_) used to validate value. If a pattern is set to RegExp then type is assumed to be `string`.
 - `sanitize` Function, boolean or string - See below for more details
 - `default` (_optional_) default value to use if value is undefined, null, an empty string or missing
@@ -135,12 +136,10 @@ Experimental Values (may be deprecated):
   - `object`
   - `array`
   - `any`
-- Format must be one of the following predefined formats
-  - `url`
-  - `email`
-  - `filename`
-  - `username`
+- Format, if specified, must be one of the predefined rules, for example `url` or `email`.
+
   - TODO: allow users to add their own predefined types
+
 - If a predefined type, rule options set by the caller are merged with rule
   options set for the pre-defined rule
 - Predefined rules often use the `pattern` option to specify _RegExp_
@@ -191,6 +190,12 @@ The `sanitize` option can be one of
 Because input is from UI and is assumed to be a string, `sanitize` _should_ be
 set to `true` for all `type` values other than 'string' when using
 `InputValidator`.
+
+### Pre-defined rules
+
+Predefined rules can be found in `validator_rule.ts` under `const RULE_LIBRARY`.
+
+Add your own rules by reference
 
 ## Dev
 

@@ -1,6 +1,10 @@
-import { ValidatorType } from './../src/validator-rule';
 import { Dict } from 'epdoc-util';
 import { InputValidator } from '../src/input-validator';
+import { ValidatorRuleLibrary, ValidatorType } from './../src/validator-rule';
+
+const externalLibrary: ValidatorRuleLibrary = {
+  username: { type: ValidatorType.string, pattern: /^[a-z0-9]{2,}$/ }
+};
 
 describe('input', () => {
   describe('string', () => {
@@ -92,6 +96,7 @@ describe('input', () => {
       let changes: Dict = {};
       let i1 = 'validusername';
       let validator = new InputValidator(changes);
+      validator.addRuleLibrary(externalLibrary);
       validator
         .input('Invalid$username')
         .name('a')

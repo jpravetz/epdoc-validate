@@ -16,6 +16,7 @@ var ValidatorErrorType;
 class ValidatorBase {
     constructor(parent) {
         this._errors = [];
+        this._externalLibrary = {};
         this._parent = parent;
     }
     clear() {
@@ -48,6 +49,10 @@ class ValidatorBase {
     }
     validate(rule) {
         throw new Error('Implemented by subclass');
+    }
+    addRuleLibrary(library) {
+        this._externalLibrary = Object.assign(this._externalLibrary, library);
+        return this;
     }
 }
 exports.ValidatorBase = ValidatorBase;

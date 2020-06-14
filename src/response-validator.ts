@@ -1,10 +1,10 @@
-import { ValidatorItemResponse } from './validator-item-response';
-import { ValidatorBase, IValidator } from './validator-base';
-import { IValidatorRuleParams, ValidatorRule } from './validator-rule';
+import { IValidator, ValidatorBase } from './validator-base';
 import { ValidatorItem } from './validator-item';
+import { ValidatorItemResponse } from './validator-item-response';
+import { IValidatorRuleParams, ValidatorRule } from './validator-rule';
 
 export class ResponseValidator extends ValidatorBase implements IValidator {
-  _itemValidator?: ValidatorItem;
+  public _itemValidator?: ValidatorItem;
   protected _result: any;
 
   constructor() {
@@ -22,7 +22,7 @@ export class ResponseValidator extends ValidatorBase implements IValidator {
         'ResponseValidator validate method can only be called with a single rule'
       );
     }
-    const validatorRule = new ValidatorRule(rule);
+    const validatorRule = new ValidatorRule(rule, this._externalLibrary);
     const itemValidator = this._itemValidator as ValidatorItem;
     itemValidator.validate(validatorRule);
     this.output = itemValidator.output;

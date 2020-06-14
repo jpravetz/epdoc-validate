@@ -509,7 +509,6 @@ class ValidatorItem extends validator_base_1.ValidatorBase {
                             this._errors.concat(item.errors);
                         }
                         else {
-                            console.log('adding array item', v);
                             this._result.push(v);
                         }
                     }

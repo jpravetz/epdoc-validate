@@ -1,6 +1,6 @@
-import { IValidatorRuleParams } from './validator-rule';
 import { Dict } from 'epdoc-util';
 import { ValidatorItem } from './validator-item';
+import { IValidatorRuleParams, ValidatorRuleLibrary } from './validator-rule';
 
 export type ValueCallback = (val: any) => any;
 
@@ -44,6 +44,7 @@ export class ValidatorBase {
   protected _parent?: ValidatorBase;
   protected _result?: any;
   protected _errors: IValidatorErrorItem[] = [];
+  protected _externalLibrary: ValidatorRuleLibrary = {};
 
   constructor(parent?: ValidatorBase) {
     this._parent = parent;
@@ -87,5 +88,10 @@ export class ValidatorBase {
 
   public validate(rule: Dict): this {
     throw new Error('Implemented by subclass');
+  }
+
+  public addRuleLibrary(library: ValidatorRuleLibrary): this {
+    this._externalLibrary = Object.assign(this._externalLibrary, library);
+    return this;
   }
 }

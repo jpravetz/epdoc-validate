@@ -1,8 +1,8 @@
-import { ValidatorBase, IValidator, ValueCallback } from './validator-base';
-import { ValidatorItemInput } from './validator-item-input';
-import { ValidatorRule, IValidatorRuleParams } from './validator-rule';
+import { deepEquals, Dict, isString } from 'epdoc-util';
+import { IValidator, ValidatorBase, ValueCallback } from './validator-base';
 import { ValidatorItem } from './validator-item';
-import { Dict, deepEquals, isString } from 'epdoc-util';
+import { ValidatorItemInput } from './validator-item-input';
+import { IValidatorRuleParams, ValidatorRule } from './validator-rule';
 
 /**
  * Intended for the purpose of gathering values from UI,  dcomparing them against
@@ -73,7 +73,7 @@ export class InputValidator extends ValidatorBase implements IValidator {
     const rules: IValidatorRuleParams[] = Array.isArray(rule) ? rule : [rule];
     let passed = false;
     for (let idx = 0; idx < rules.length && !passed; ++idx) {
-      const validatorRule = new ValidatorRule(rules[idx]);
+      const validatorRule = new ValidatorRule(rules[idx], this._externalLibrary);
       (this._itemValidator as ValidatorItem).validate(validatorRule);
       if (!(this._itemValidator as ValidatorItem).hasErrors()) {
         passed = true;
